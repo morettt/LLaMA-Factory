@@ -14,6 +14,8 @@
 
 import os
 import shutil
+import threading
+import time
 from typing import TYPE_CHECKING, Generator
 
 from ..extras.packages import is_gradio_available
@@ -112,14 +114,35 @@ def _download_model(download_path: str, series: str, model_name: str) -> Generat
     else:
         yield "⚠️ 无法确认模型大小，继续下载...\n"
 
-    try:
-        from modelscope import snapshot_download
-        local_dir = os.path.join(download_path, model_name)
-        yield f"下载中，请稍候（大模型可能需要较长时间）...\n"
-        model_dir = snapshot_download(model_id, local_dir=local_dir)
-        yield f"✅ 下载完毕！\n模型保存路径：{model_dir}"
-    except Exception as e:
-        yield f"❌ 下载失败：{e}"
+    local_dir = os.path.join(download_path, model_name)
+    result = {"done": False, "error": None, "path": None}
+
+    def _do_download():
+        try:
+            from modelscope import snapshot_download
+            result["path"] = snapshot_download(model_id, local_dir=local_dir)
+        except Exception as e:
+            result["error"] = e
+        finally:
+            result["done"] = True
+
+    threading.Thread(target=_do_download, daemon=True).start()
+
+    while not result["done"]:
+        current_gb = _get_folder_size_gb(local_dir) if os.path.exists(local_dir) else 0.0
+        if model_gb:
+            pct = min(current_gb / model_gb * 100, 99.0)
+            bar = "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
+            yield f"[{bar}] {pct:.1f}%\n已下载：{current_gb:.2f} GB / {model_gb:.1f} GB"
+        else:
+            yield f"下载中... 已下载 {current_gb:.2f} GB"
+        time.sleep(2)
+
+    if result["error"]:
+        yield f"❌ 下载失败：{result['error']}"
+    else:
+        final_gb = _get_folder_size_gb(local_dir)
+        yield f"✅ 下载完毕！\n大小：{final_gb:.2f} GB\n路径：{result['path']}"
 
 
 def _list_downloaded_models(download_path: str) -> list[list]:
