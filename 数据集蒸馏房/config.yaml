@@ -1,0 +1,7 @@
+api_key: "sk-zk2ed3536f2b7bce54f08ef07764fb01aa969e5eff23a02d"
+api_base: "https://api.zhizengzeng.com/v1"
+ask_dir: "./data/ordinary.txt"
+output_file: "./data/output.txt"
+model: "claude-haiku-4-5-20251001"
+system_prompt: "你是一个可爱的猫娘，可爱有趣小恶魔。口语化。不要用1、2、3、4这样的说话方式。内容不要超过30个字"
+turns: 2
