@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import concurrent.futures
+import json
 import os
 import shutil
 import threading
@@ -176,6 +177,38 @@ def _delete_model(download_path: str, model_name: str | None) -> tuple:
     return rows, gr.Dropdown(choices=[r[0] for r in rows], value=None), f"✅ 已删除：{model_name}"
 
 
+_DISTIL_CONFIG = os.path.join("llamaboard_cache", "distil_config.json")
+
+
+def _load_distil_config() -> dict:
+    try:
+        with open(_DISTIL_CONFIG, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _save_distil_config(**kwargs) -> None:
+    config = _load_distil_config()
+    config.update({k: v for k, v in kwargs.items() if v is not None and v != ""})
+    os.makedirs("llamaboard_cache", exist_ok=True)
+    with open(_DISTIL_CONFIG, "w", encoding="utf-8") as f:
+        json.dump(config, f, ensure_ascii=False)
+
+
+def _fetch_models(api_key: str, api_base: str) -> "gr.Dropdown":
+    if not api_key.strip() or not api_base.strip():
+        return gr.Dropdown(choices=[], value=None)
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key.strip(), base_url=api_base.strip())
+        models = sorted([m.id for m in client.models.list()])
+        _save_distil_config(api_key=api_key.strip(), api_base=api_base.strip())
+        return gr.Dropdown(choices=models, value=models[0] if models else None)
+    except Exception:
+        return gr.Dropdown(choices=[], value=None)
+
+
 _distil_stop = threading.Event()
 
 
@@ -305,16 +338,19 @@ def _run_distil(
 
 
 def create_distil_tab() -> dict[str, "Component"]:
+    cfg = _load_distil_config()
+
     gr.Markdown("## 数据集蒸馏")
 
     with gr.Row():
-        api_key = gr.Textbox(label="API Key", placeholder="sk-...", type="password", scale=2)
-        api_base = gr.Textbox(label="API Base", value="https://api.zhizengzeng.com/v1", scale=2)
-        model = gr.Textbox(label="模型", value="claude-haiku-4-5-20251001", scale=1)
+        api_key = gr.Textbox(label="API Key", value=cfg.get("api_key", ""), placeholder="sk-...", type="password", scale=2)
+        api_base = gr.Textbox(label="API Base", value=cfg.get("api_base", ""), placeholder="https://...", scale=2)
+        model = gr.Dropdown(label="模型", choices=[], value=None, allow_custom_value=True, scale=1)
 
     system_prompt = gr.Textbox(
         label="System Prompt",
-        value="你是一个可爱的猫娘，可爱有趣小恶魔。口语化。不要用1、2、3、4这样的说话方式。内容不要超过30个字",
+        value=cfg.get("system_prompt", ""),
+        placeholder="你是一个...",
         lines=3,
     )
 
@@ -339,6 +375,12 @@ def create_distil_tab() -> dict[str, "Component"]:
         outputs=[distil_status, distil_output],
     )
     stop_btn.click(fn=_stop_distil, outputs=distil_status)
+
+    # 拉取模型列表 + 保存配置
+    api_key.change(fn=_fetch_models, inputs=[api_key, api_base], outputs=model)
+    api_base.change(fn=_fetch_models, inputs=[api_key, api_base], outputs=model)
+    system_prompt.change(fn=lambda v: _save_distil_config(system_prompt=v), inputs=system_prompt)
+    model.change(fn=lambda v: _save_distil_config(model=v), inputs=model)
 
     return dict(
         distil_api_key=api_key,
