@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import concurrent.futures
 import os
 import shutil
 import threading
@@ -173,6 +174,149 @@ def _delete_model(download_path: str, model_name: str | None) -> tuple:
     shutil.rmtree(folder)
     rows = _list_downloaded_models(download_path)
     return rows, gr.Dropdown(choices=[r[0] for r in rows], value=None), f"✅ 已删除：{model_name}"
+
+
+def _run_distil(
+    api_key: str,
+    api_base: str,
+    model: str,
+    system_prompt: str,
+    turns: int,
+    input_file: str,
+    output_file: str,
+    workers: int,
+) -> Generator[str, None, None]:
+    if not api_key.strip():
+        yield "请填写 API Key。"
+        return
+    if not os.path.exists(input_file):
+        yield f"输入文件不存在：{input_file}"
+        return
+
+    from openai import OpenAI
+    client = OpenAI(api_key=api_key.strip(), base_url=api_base.strip())
+
+    with open(input_file, "r", encoding="utf-8") as f:
+        lines = [l for l in f.readlines() if "问：" in l]
+
+    total = len(lines)
+    if total == 0:
+        yield "输入文件中没有找到「问：」格式的内容。"
+        return
+
+    os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
+    write_lock = threading.Lock()
+    counter = {"done": 0, "success": 0, "fail": 0}
+
+    def generate_ai_response(history):
+        messages = [{"role": "system", "content": system_prompt}] + history
+        resp = client.chat.completions.create(model=model, messages=messages)
+        return (resp.choices[0].message.content or "").strip().replace("\n", " ")
+
+    def generate_user_followup(history):
+        conversation = "\n".join(
+            f"{'用户' if m['role'] == 'user' else 'AI'}：{m['content']}" for m in history
+        )
+        messages = [
+            {"role": "system", "content": "你的任务是根据对话内容，生成用户接下来自然会说的一句话。要口语化、简短，只输出用户说的话，不加任何前缀。"},
+            {"role": "user", "content": f"对话内容：\n{conversation}\n\n用户接下来说："},
+        ]
+        resp = client.chat.completions.create(model=model, messages=messages)
+        return (resp.choices[0].message.content or "").strip().replace("\n", " ")
+
+    def process_line(line):
+        ask_content = line.split("问：")[1].strip()
+        if not ask_content:
+            return
+        try:
+            history = [{"role": "user", "content": ask_content}]
+            parts = [f"问：{ask_content}\n"]
+            for turn in range(turns):
+                ai_resp = generate_ai_response(history)
+                if not ai_resp:
+                    return
+                history.append({"role": "assistant", "content": ai_resp})
+                parts.append(f"答：{ai_resp}\n")
+                if turn < turns - 1:
+                    followup = generate_user_followup(history)
+                    if not followup:
+                        return
+                    history.append({"role": "user", "content": followup})
+                    parts.append(f"问：{followup}\n")
+            with write_lock:
+                with open(output_file, "a", encoding="utf-8") as f:
+                    f.writelines(parts)
+                    f.write("\n")
+            counter["success"] += 1
+        except Exception:
+            counter["fail"] += 1
+        finally:
+            counter["done"] += 1
+
+    # 清空输出文件
+    open(output_file, "w", encoding="utf-8").close()
+
+    result = {"done": False}
+
+    def _run():
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
+            ex.map(process_line, lines)
+        result["done"] = True
+
+    threading.Thread(target=_run, daemon=True).start()
+
+    yield f"开始蒸馏，共 {total} 条，并发 {workers} 线程...\n"
+    while not result["done"]:
+        pct = counter["done"] / total * 100
+        bar = "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
+        yield f"[{bar}] {pct:.1f}%\n已处理：{counter['done']}/{total}  成功：{counter['success']}  失败：{counter['fail']}"
+        time.sleep(2)
+
+    yield f"✅ 蒸馏完成！\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
+
+
+def create_distil_tab() -> dict[str, "Component"]:
+    gr.Markdown("## 数据集蒸馏")
+
+    with gr.Row():
+        api_key = gr.Textbox(label="API Key", placeholder="sk-...", type="password", scale=2)
+        api_base = gr.Textbox(label="API Base", value="https://api.zhizengzeng.com/v1", scale=2)
+        model = gr.Textbox(label="模型", value="claude-haiku-4-5-20251001", scale=1)
+
+    system_prompt = gr.Textbox(
+        label="System Prompt",
+        value="你是一个可爱的猫娘，可爱有趣小恶魔。口语化。不要用1、2、3、4这样的说话方式。内容不要超过30个字",
+        lines=3,
+    )
+
+    with gr.Row():
+        turns = gr.Slider(minimum=1, maximum=10, value=2, step=1, label="对话轮数")
+        workers = gr.Slider(minimum=1, maximum=20, value=6, step=1, label="并发线程数")
+
+    with gr.Row():
+        input_file = gr.Textbox(label="输入文件路径", value="./data/ordinary.txt", scale=3)
+        output_file = gr.Textbox(label="输出文件路径", value="./data/output.txt", scale=3)
+
+    start_btn = gr.Button("开始蒸馏", variant="primary")
+    distil_status = gr.Textbox(label="状态", interactive=False, lines=6)
+
+    start_btn.click(
+        fn=_run_distil,
+        inputs=[api_key, api_base, model, system_prompt, turns, input_file, output_file, workers],
+        outputs=distil_status,
+    )
+
+    return dict(
+        distil_api_key=api_key,
+        distil_api_base=api_base,
+        distil_model=model,
+        distil_system_prompt=system_prompt,
+        distil_turns=turns,
+        distil_workers=workers,
+        distil_input_file=input_file,
+        distil_output_file=output_file,
+        distil_status=distil_status,
+    )
 
 
 def create_extra_tab() -> dict[str, "Component"]:
