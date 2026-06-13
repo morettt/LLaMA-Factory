@@ -134,16 +134,22 @@ def _list_downloaded_models(download_path: str) -> list[list]:
     return rows
 
 
-def _delete_model(download_path: str, model_table: list, selected: "gr.SelectData") -> tuple:
-    if not model_table or selected is None:
-        return model_table, "请先在列表中点击选择要删除的模型。"
-    row_idx = selected.index[0]
-    model_name = model_table[row_idx][0]
+def _refresh_models(download_path: str) -> tuple:
+    rows = _list_downloaded_models(download_path)
+    names = [r[0] for r in rows]
+    return rows, gr.Dropdown(choices=names, value=None)
+
+
+def _delete_model(download_path: str, model_name: str | None) -> tuple:
+    if not model_name:
+        return _list_downloaded_models(download_path), gr.Dropdown(choices=[]), "请先选择要删除的模型。"
     folder = os.path.join(download_path, model_name)
     if not os.path.exists(folder):
-        return _list_downloaded_models(download_path), f"路径不存在：{folder}"
+        rows = _list_downloaded_models(download_path)
+        return rows, gr.Dropdown(choices=[r[0] for r in rows]), f"路径不存在：{folder}"
     shutil.rmtree(folder)
-    return _list_downloaded_models(download_path), f"✅ 已删除：{model_name}"
+    rows = _list_downloaded_models(download_path)
+    return rows, gr.Dropdown(choices=[r[0] for r in rows], value=None), f"✅ 已删除：{model_name}"
 
 
 def create_extra_tab() -> dict[str, "Component"]:
@@ -167,24 +173,26 @@ def create_extra_tab() -> dict[str, "Component"]:
 
     gr.Markdown("---\n### 已下载的模型")
 
-    with gr.Row():
-        refresh_btn = gr.Button("刷新列表")
-        delete_btn = gr.Button("删除选中", variant="stop")
-
+    refresh_btn = gr.Button("刷新列表")
     model_table = gr.Dataframe(
         headers=["模型名称", "占用空间"],
         datatype=["str", "str"],
         interactive=False,
-        label="已下载列表（点击行选中）",
+        label="已下载列表",
     )
+
+    with gr.Row():
+        delete_dd = gr.Dropdown(choices=[], label="选择要删除的模型", scale=3)
+        delete_btn = gr.Button("删除", variant="stop", scale=1)
+
     delete_status = gr.Textbox(label="操作结果", interactive=False, lines=1)
 
     # 事件绑定
     series_dd.change(fn=_update_model_choices, inputs=series_dd, outputs=model_dd)
     check_btn.click(fn=_check_space, inputs=[download_path, series_dd, model_dd], outputs=status_box)
     download_btn.click(fn=_download_model, inputs=[download_path, series_dd, model_dd], outputs=status_box)
-    refresh_btn.click(fn=_list_downloaded_models, inputs=download_path, outputs=model_table)
-    delete_btn.click(fn=_delete_model, inputs=[download_path, model_table], outputs=[model_table, delete_status])
+    refresh_btn.click(fn=_refresh_models, inputs=download_path, outputs=[model_table, delete_dd])
+    delete_btn.click(fn=_delete_model, inputs=[download_path, delete_dd], outputs=[model_table, delete_dd, delete_status])
 
     return dict(
         extra_series=series_dd,
@@ -192,5 +200,6 @@ def create_extra_tab() -> dict[str, "Component"]:
         extra_download_path=download_path,
         extra_status=status_box,
         extra_model_table=model_table,
+        extra_delete_dd=delete_dd,
         extra_delete_status=delete_status,
     )
