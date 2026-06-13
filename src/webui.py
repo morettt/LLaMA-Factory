@@ -14,37 +14,19 @@
 
 import os
 
-import gradio as gr
-import uvicorn
-from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
-
 from llamafactory.extras.misc import fix_proxy, is_env_enabled
-from llamafactory.webui.extra_ui import create_extra_ui
 from llamafactory.webui.interface import create_ui
 
 
 def main():
     gradio_ipv6 = is_env_enabled("GRADIO_IPV6")
+    gradio_share = is_env_enabled("GRADIO_SHARE")
     server_name = os.getenv("GRADIO_SERVER_NAME", "[::]" if gradio_ipv6 else "0.0.0.0")
     server_port = int(os.getenv("GRADIO_SERVER_PORT", "6006"))
 
     fix_proxy(ipv6_enabled=gradio_ipv6)
-
-    app = FastAPI()
-
-    @app.get("/")
-    async def root():
-        return RedirectResponse(url="/main/")
-
-    app = gr.mount_gradio_app(app, create_ui().queue(), path="/main", root_path="/main")
-    app = gr.mount_gradio_app(app, create_extra_ui().queue(), path="/test", root_path="/test")
-
-    print(f"Visit http://127.0.0.1:{server_port}/       — redirects to Main WebUI")
-    print(f"Visit http://127.0.0.1:{server_port}/main/  — Main WebUI")
-    print(f"Visit http://127.0.0.1:{server_port}/test/  — Tools")
-
-    uvicorn.run(app, host=server_name, port=server_port)
+    print(f"Visit http://127.0.0.1:{server_port}")
+    create_ui().queue().launch(share=gradio_share, server_name=server_name, server_port=server_port)
 
 
 if __name__ == "__main__":

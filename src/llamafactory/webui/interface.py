@@ -29,6 +29,7 @@ from .components import (
 )
 from .css import CSS
 from .engine import Engine
+from .extra_ui import create_extra_tab
 
 
 if is_gradio_available():
@@ -61,6 +62,9 @@ def create_ui(demo_mode: bool = False) -> "gr.Blocks":
         if not demo_mode:
             with gr.Tab("Export"):
                 engine.manager.add_elems("export", create_export_tab(engine))
+
+        with gr.Tab("模型下载"):
+            engine.manager.add_elems("extra", create_extra_tab())
 
         engine.manager.add_elems("footer", create_footer())
         demo.load(engine.resume, outputs=engine.manager.get_elem_list(), concurrency_limit=None)
