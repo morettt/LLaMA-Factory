@@ -177,7 +177,7 @@ def _delete_model(download_path: str, model_name: str | None) -> tuple:
     return rows, gr.Dropdown(choices=[r[0] for r in rows], value=None), f"✅ 已删除：{model_name}"
 
 
-_DISTIL_CONFIG = os.path.join("llamaboard_cache", "distil_config.json")
+_DISTIL_CONFIG = os.path.join("数据集蒸馏房", "distil_config.json")
 
 
 def _load_distil_config() -> dict:
@@ -191,7 +191,7 @@ def _load_distil_config() -> dict:
 def _save_distil_config(**kwargs) -> None:
     config = _load_distil_config()
     config.update({k: v for k, v in kwargs.items() if v is not None and v != ""})
-    os.makedirs("llamaboard_cache", exist_ok=True)
+    os.makedirs("数据集蒸馏房", exist_ok=True)
     with open(_DISTIL_CONFIG, "w", encoding="utf-8") as f:
         json.dump(config, f, ensure_ascii=False)
 
