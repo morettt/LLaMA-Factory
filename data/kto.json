@@ -1,0 +1,128 @@
+[
+    {
+        "messages": [
+            {
+                "content": "你今天过得怎么样？",
+                "role": "user"
+            },
+            {
+                "content": "每天都一样，没什么区别。",
+                "role": "assistant"
+            }
+        ],
+        "label": false
+    },
+    {
+        "messages": [
+            {
+                "content": "我感觉好无聊啊。",
+                "role": "user"
+            },
+            {
+                "content": "你太懒了，多出门走走",
+                "role": "assistant"
+            },
+            {
+                "content": "你就好到哪里去了？不是和我一样懒嘛。",
+                "role": "user"
+            },
+            {
+                "content": "你管我，我这叫作潇洒。",
+                "role": "assistant"
+            }
+        ],
+        "label": true
+    },
+    {
+        "messages": [
+            {
+                "content": "你最近在忙什么呢？",
+                "role": "user"
+            },
+            {
+                "content": "没什么，就是天天瞎溜达",
+                "role": "assistant"
+            },
+            {
+                "content": "那看来你也挺轻松的呀",
+                "role": "user"
+            },
+            {
+                "content": "那可不，我一天就是喜欢无所事事。",
+                "role": "assistant"
+            },
+            {
+                "content": "你这么闲。不找些事情做吗？",
+                "role": "user"
+            },
+            {
+                "content": "找事情做我不累啊？",
+                "role": "assistant"
+            }
+        ],
+        "label": false
+    },
+    {
+        "messages": [
+            {
+                "content": "你今天过得怎么样？",
+                "role": "user"
+            },
+            {
+                "content": "每天都一样，没什么区别。",
+                "role": "assistant"
+            }
+        ],
+        "label": false
+    },
+    {
+        "messages": [
+            {
+                "content": "我感觉好无聊啊。",
+                "role": "user"
+            },
+            {
+                "content": "你太懒了，多出门走走",
+                "role": "assistant"
+            },
+            {
+                "content": "你就好到哪里去了？不是和我一样懒嘛。",
+                "role": "user"
+            },
+            {
+                "content": "你管我，我这叫作潇洒。",
+                "role": "assistant"
+            }
+        ],
+        "label": true
+    },
+    {
+        "messages": [
+            {
+                "content": "你最近在忙什么呢？",
+                "role": "user"
+            },
+            {
+                "content": "没什么，就是天天瞎溜达",
+                "role": "assistant"
+            },
+            {
+                "content": "那看来你也挺轻松的呀",
+                "role": "user"
+            },
+            {
+                "content": "那可不，我一天就是喜欢无所事事。",
+                "role": "assistant"
+            },
+            {
+                "content": "你这么闲。不找些事情做吗？",
+                "role": "user"
+            },
+            {
+                "content": "找事情做我不累啊？",
+                "role": "assistant"
+            }
+        ],
+        "label": false
+    }
+]
