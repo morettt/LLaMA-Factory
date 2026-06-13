@@ -151,7 +151,7 @@ def _list_downloaded_models(download_path: str) -> list[list]:
     rows = []
     for name in sorted(os.listdir(download_path)):
         full = os.path.join(download_path, name)
-        if os.path.isdir(full):
+        if os.path.isdir(full) and not name.startswith("."):
             size = _get_folder_size_gb(full)
             rows.append([name, f"{size:.2f} GB"])
     return rows
