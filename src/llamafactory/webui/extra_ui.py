@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import concurrent.futures
+import json
 import os
 import shutil
 import threading
@@ -176,6 +177,38 @@ def _delete_model(download_path: str, model_name: str | None) -> tuple:
     return rows, gr.Dropdown(choices=[r[0] for r in rows], value=None), f"✅ 已删除：{model_name}"
 
 
+_DISTIL_CONFIG = os.path.join("数据集蒸馏房", "distil_config.json")
+
+
+def _load_distil_config() -> dict:
+    try:
+        with open(_DISTIL_CONFIG, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _save_distil_config(**kwargs) -> None:
+    config = _load_distil_config()
+    config.update({k: v for k, v in kwargs.items() if v is not None and v != ""})
+    os.makedirs("数据集蒸馏房", exist_ok=True)
+    with open(_DISTIL_CONFIG, "w", encoding="utf-8") as f:
+        json.dump(config, f, ensure_ascii=False)
+
+
+def _fetch_models(api_key: str, api_base: str) -> "gr.Dropdown":
+    if not api_key.strip() or not api_base.strip():
+        return gr.Dropdown(choices=[], value=None)
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key.strip(), base_url=api_base.strip())
+        models = sorted([m.id for m in client.models.list()])
+        _save_distil_config(api_key=api_key.strip(), api_base=api_base.strip())
+        return gr.Dropdown(choices=models, value=models[0] if models else None)
+    except Exception:
+        return gr.Dropdown(choices=[], value=None)
+
+
 _distil_stop = threading.Event()
 
 
@@ -184,12 +217,33 @@ def _stop_distil() -> str:
     return "⏹ 已发送停止信号，等待当前批次完成..."
 
 
+_LINES_PER_PAGE = 30
+
+
 def _read_output(output_file: str) -> str:
     try:
         with open(output_file, "r", encoding="utf-8") as f:
             return f.read()
     except Exception:
         return ""
+
+
+def _get_page(output_file: str, page_idx: int) -> tuple:
+    content = _read_output(output_file)
+    lines = content.split("\n") if content else []
+    total_pages = max(1, (len(lines) + _LINES_PER_PAGE - 1) // _LINES_PER_PAGE)
+    page_idx = max(0, min(page_idx, total_pages - 1))
+    start = page_idx * _LINES_PER_PAGE
+    page_content = "\n".join(lines[start:start + _LINES_PER_PAGE])
+    return page_content, f"第 {page_idx + 1} 页 / 共 {total_pages} 页", page_idx
+
+
+def _prev_page(output_file: str, page_idx: int) -> tuple:
+    return _get_page(output_file, page_idx - 1)
+
+
+def _next_page(output_file: str, page_idx: int) -> tuple:
+    return _get_page(output_file, page_idx + 1)
 
 
 def _run_distil(
@@ -205,10 +259,10 @@ def _run_distil(
     _distil_stop.clear()
 
     if not api_key.strip():
-        yield "请填写 API Key。", ""
+        yield "请填写 API Key。", "", "第 1 页 / 共 1 页", 0
         return
     if not os.path.exists(input_file):
-        yield f"输入文件不存在：{input_file}", ""
+        yield f"输入文件不存在：{input_file}", "", "第 1 页 / 共 1 页", 0
         return
 
     from openai import OpenAI
@@ -219,7 +273,7 @@ def _run_distil(
 
     total = len(lines)
     if total == 0:
-        yield "输入文件中没有找到「问：」格式的内容。", ""
+        yield "输入文件中没有找到「问：」格式的内容。", "", "第 1 页 / 共 1 页", 0
         return
 
     os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
@@ -288,33 +342,38 @@ def _run_distil(
 
     threading.Thread(target=_run, daemon=True).start()
 
-    yield f"开始蒸馏，共 {total} 条，并发 {workers} 线程...\n", ""
+    yield f"开始蒸馏，共 {total} 条，并发 {workers} 线程...\n", "", "第 1 页 / 共 1 页", 0
     while not result["done"]:
         pct = counter["done"] / total * 100
         bar = "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
         status = f"[{bar}] {pct:.1f}%\n已处理：{counter['done']}/{total}  成功：{counter['success']}  失败：{counter['fail']}"
         if _distil_stop.is_set():
             status += "\n⏹ 停止中..."
-        yield status, _read_output(output_file)
+        page_content, page_info, page_idx = _get_page(output_file, 9999)
+        yield status, page_content, page_info, page_idx
         time.sleep(2)
 
     final_status = f"✅ 蒸馏完成！\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
     if _distil_stop.is_set():
         final_status = f"⏹ 已停止。\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
-    yield final_status, _read_output(output_file)
+    page_content, page_info, page_idx = _get_page(output_file, 9999)
+    yield final_status, page_content, page_info, page_idx
 
 
 def create_distil_tab() -> dict[str, "Component"]:
+    cfg = _load_distil_config()
+
     gr.Markdown("## 数据集蒸馏")
 
     with gr.Row():
-        api_key = gr.Textbox(label="API Key", placeholder="sk-...", type="password", scale=2)
-        api_base = gr.Textbox(label="API Base", value="https://api.zhizengzeng.com/v1", scale=2)
-        model = gr.Textbox(label="模型", value="claude-haiku-4-5-20251001", scale=1)
+        api_key = gr.Textbox(label="API Key", value=cfg.get("api_key", ""), placeholder="sk-...", type="password", scale=2)
+        api_base = gr.Textbox(label="API Base", value=cfg.get("api_base", ""), placeholder="https://...", scale=2)
+        model = gr.Dropdown(label="模型", choices=[], value=None, allow_custom_value=True, scale=1)
 
     system_prompt = gr.Textbox(
         label="System Prompt",
-        value="你是一个可爱的猫娘，可爱有趣小恶魔。口语化。不要用1、2、3、4这样的说话方式。内容不要超过30个字",
+        value=cfg.get("system_prompt", ""),
+        placeholder="你是一个...",
         lines=3,
     )
 
@@ -331,14 +390,29 @@ def create_distil_tab() -> dict[str, "Component"]:
         stop_btn = gr.Button("停止", variant="stop", scale=1)
 
     distil_status = gr.Textbox(label="进度", interactive=False, lines=4)
-    distil_output = gr.Textbox(label="蒸馏输出", interactive=False, lines=15, max_lines=200)
+    distil_output = gr.Textbox(label="蒸馏输出", interactive=False, lines=15)
+
+    with gr.Row():
+        prev_btn = gr.Button("上一页", scale=1)
+        page_info = gr.Textbox(value="第 1 页 / 共 1 页", interactive=False, show_label=False, scale=2)
+        next_btn = gr.Button("下一页", scale=1)
+
+    page_state = gr.State(value=0)
 
     start_btn.click(
         fn=_run_distil,
         inputs=[api_key, api_base, model, system_prompt, turns, input_file, output_file, workers],
-        outputs=[distil_status, distil_output],
+        outputs=[distil_status, distil_output, page_info, page_state],
     )
     stop_btn.click(fn=_stop_distil, outputs=distil_status)
+    prev_btn.click(fn=_prev_page, inputs=[output_file, page_state], outputs=[distil_output, page_info, page_state])
+    next_btn.click(fn=_next_page, inputs=[output_file, page_state], outputs=[distil_output, page_info, page_state])
+
+    # 拉取模型列表 + 保存配置
+    api_key.change(fn=_fetch_models, inputs=[api_key, api_base], outputs=model)
+    api_base.change(fn=_fetch_models, inputs=[api_key, api_base], outputs=model)
+    system_prompt.change(fn=lambda v: _save_distil_config(system_prompt=v), inputs=system_prompt)
+    model.change(fn=lambda v: _save_distil_config(model=v), inputs=model)
 
     return dict(
         distil_api_key=api_key,
@@ -351,6 +425,7 @@ def create_distil_tab() -> dict[str, "Component"]:
         distil_output_file=output_file,
         distil_status=distil_status,
         distil_output=distil_output,
+        distil_page_info=page_info,
     )
 
 
