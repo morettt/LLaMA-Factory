@@ -294,8 +294,8 @@ def create_distil_tab() -> dict[str, "Component"]:
         workers = gr.Slider(minimum=1, maximum=20, value=6, step=1, label="并发线程数")
 
     with gr.Row():
-        input_file = gr.Textbox(label="输入文件路径", placeholder="/root/LLaMA-Factory/数据集蒸馏房/data/ordinary.txt", scale=3)
-        output_file = gr.Textbox(label="输出文件路径", placeholder="/root/LLaMA-Factory/数据集蒸馏房/data/output.txt", scale=3)
+        input_file = gr.Textbox(label="输入文件路径", value="/root/LLaMA-Factory/数据集蒸馏房/data/ordinary.txt", scale=3)
+        output_file = gr.Textbox(label="输出文件路径", value="/root/LLaMA-Factory/数据集蒸馏房/data/output.txt", scale=3)
 
     start_btn = gr.Button("开始蒸馏", variant="primary")
     distil_status = gr.Textbox(label="状态", interactive=False, lines=6)
