@@ -134,10 +134,13 @@ def _list_downloaded_models(download_path: str) -> list[list]:
     return rows
 
 
-def _delete_model(download_path: str, model_table: list, selected: "gr.SelectData") -> tuple:
-    if not model_table or selected is None:
-        return model_table, "请先在列表中点击选择要删除的模型。"
-    row_idx = selected.index[0]
+def _on_row_select(evt: "gr.SelectData") -> int:
+    return evt.index[0]
+
+
+def _delete_model(download_path: str, model_table: list, row_idx: int | None) -> tuple:
+    if row_idx is None or not model_table:
+        return model_table, "请先点击列表中的一行选中模型，再点删除。"
     model_name = model_table[row_idx][0]
     folder = os.path.join(download_path, model_name)
     if not os.path.exists(folder):
@@ -175,16 +178,18 @@ def create_extra_tab() -> dict[str, "Component"]:
         headers=["模型名称", "占用空间"],
         datatype=["str", "str"],
         interactive=False,
-        label="已下载列表（点击行选中）",
+        label="已下载列表（点击行选中，再点删除）",
     )
     delete_status = gr.Textbox(label="操作结果", interactive=False, lines=1)
+    selected_row = gr.State(value=None)
 
     # 事件绑定
     series_dd.change(fn=_update_model_choices, inputs=series_dd, outputs=model_dd)
     check_btn.click(fn=_check_space, inputs=[download_path, series_dd, model_dd], outputs=status_box)
     download_btn.click(fn=_download_model, inputs=[download_path, series_dd, model_dd], outputs=status_box)
     refresh_btn.click(fn=_list_downloaded_models, inputs=download_path, outputs=model_table)
-    delete_btn.click(fn=_delete_model, inputs=[download_path, model_table], outputs=[model_table, delete_status])
+    model_table.select(fn=_on_row_select, outputs=selected_row)
+    delete_btn.click(fn=_delete_model, inputs=[download_path, model_table, selected_row], outputs=[model_table, delete_status])
 
     return dict(
         extra_series=series_dd,
