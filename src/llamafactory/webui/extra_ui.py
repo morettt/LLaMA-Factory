@@ -366,7 +366,7 @@ def create_distil_tab() -> dict[str, "Component"]:
     gr.Markdown("## 数据集蒸馏")
 
     with gr.Row():
-        api_key = gr.Textbox(label="API Key", value=cfg.get("api_key", ""), placeholder="sk-...", type="password", scale=2)
+        api_key = gr.Textbox(label="API Key", value=cfg.get("api_key", ""), placeholder="sk-...", scale=2)
         api_base = gr.Textbox(label="API Base", value=cfg.get("api_base", ""), placeholder="https://...", scale=2)
         model = gr.Dropdown(label="模型", choices=[], value=None, allow_custom_value=True, scale=1)
 
