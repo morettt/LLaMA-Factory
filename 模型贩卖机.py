@@ -1,0 +1,814 @@
+import shutil
+import os
+from modelscope import snapshot_download
+from modelscope.hub.api import HubApi
+from yaml import safe_load, safe_dump
+
+DOWNLOAD_PATH = "/root/autodl-tmp"
+YAML_PATH = "/root/LLaMA-Factory/src/llamaboard_cache/user_config.yaml"
+
+
+MODELS = {
+    'Qwen 系列': [
+        ('Qwen/Qwen2-0.5B', 'Qwen2-0.5B'),
+        ('Qwen/Qwen2-1.5B', 'Qwen2-1.5B'),
+        ('Qwen/Qwen2-7B', 'Qwen2-7B'),
+        ('Qwen/Qwen2-72B', 'Qwen2-72B'),
+        ('Qwen/Qwen2-57B-A14B', 'Qwen2-MoE-57B-A14B'),
+        ('Qwen/Qwen2-0.5B-Instruct', 'Qwen2-0.5B-Instruct'),
+        ('Qwen/Qwen2-1.5B-Instruct', 'Qwen2-1.5B-Instruct'),
+        ('Qwen/Qwen2-7B-Instruct', 'Qwen2-7B-Instruct'),
+        ('Qwen/Qwen2-72B-Instruct', 'Qwen2-72B-Instruct'),
+        ('Qwen/Qwen2-57B-A14B-Instruct', 'Qwen2-MoE-57B-A14B-Instruct'),
+        ('Qwen/Qwen2-0.5B-Instruct-GPTQ-Int8', 'Qwen2-0.5B-Instruct-GPTQ-Int8'),
+        ('Qwen/Qwen2-0.5B-Instruct-GPTQ-Int4', 'Qwen2-0.5B-Instruct-GPTQ-Int4'),
+        ('Qwen/Qwen2-0.5B-Instruct-AWQ', 'Qwen2-0.5B-Instruct-AWQ'),
+        ('Qwen/Qwen2-1.5B-Instruct-GPTQ-Int8', 'Qwen2-1.5B-Instruct-GPTQ-Int8'),
+        ('Qwen/Qwen2-1.5B-Instruct-GPTQ-Int4', 'Qwen2-1.5B-Instruct-GPTQ-Int4'),
+        ('Qwen/Qwen2-1.5B-Instruct-AWQ', 'Qwen2-1.5B-Instruct-AWQ'),
+        ('Qwen/Qwen2-7B-Instruct-GPTQ-Int8', 'Qwen2-7B-Instruct-GPTQ-Int8'),
+        ('Qwen/Qwen2-7B-Instruct-GPTQ-Int4', 'Qwen2-7B-Instruct-GPTQ-Int4'),
+        ('Qwen/Qwen2-7B-Instruct-AWQ', 'Qwen2-7B-Instruct-AWQ'),
+        ('Qwen/Qwen2-72B-Instruct-GPTQ-Int8', 'Qwen2-72B-Instruct-GPTQ-Int8'),
+        ('Qwen/Qwen2-72B-Instruct-GPTQ-Int4', 'Qwen2-72B-Instruct-GPTQ-Int4'),
+        ('Qwen/Qwen2-72B-Instruct-AWQ', 'Qwen2-72B-Instruct-AWQ'),
+        ('Qwen/Qwen2-57B-A14B-Instruct-GPTQ-Int4', 'Qwen2-57B-A14B-Instruct-GPTQ-Int4'),
+        ('Qwen/Qwen2-Math-1.5B', 'Qwen2-Math-1.5B'),
+        ('Qwen/Qwen2-Math-7B', 'Qwen2-Math-7B'),
+        ('Qwen/Qwen2-Math-72B', 'Qwen2-Math-72B'),
+        ('Qwen/Qwen2-Math-1.5B-Instruct', 'Qwen2-Math-1.5B-Instruct'),
+        ('Qwen/Qwen2-Math-7B-Instruct', 'Qwen2-Math-7B-Instruct'),
+        ('Qwen/Qwen2-Math-72B-Instruct', 'Qwen2-Math-72B-Instruct'),
+        ('Qwen/Qwen2-Audio-7B', 'Qwen2-Audio-7B'),
+        ('Qwen/Qwen2-Audio-7B-Instruct', 'Qwen2-Audio-7B-Instruct'),
+        ('Qwen/Qwen2-VL-2B', 'Qwen2-VL-2B'),
+        ('Qwen/Qwen2-VL-7B', 'Qwen2-VL-7B'),
+        ('Qwen/Qwen2-VL-72B', 'Qwen2-VL-72B'),
+        ('Qwen/Qwen2-VL-2B-Instruct', 'Qwen2-VL-2B-Instruct'),
+        ('Qwen/Qwen2-VL-7B-Instruct', 'Qwen2-VL-7B-Instruct'),
+        ('Qwen/Qwen2-VL-72B-Instruct', 'Qwen2-VL-72B-Instruct'),
+        ('Qwen/Qwen2-VL-2B-Instruct-GPTQ-Int8', 'Qwen2-VL-2B-Instruct-GPTQ-Int8'),
+        ('Qwen/Qwen2-VL-2B-Instruct-GPTQ-Int4', 'Qwen2-VL-2B-Instruct-GPTQ-Int4'),
+        ('Qwen/Qwen2-VL-2B-Instruct-AWQ', 'Qwen2-VL-2B-Instruct-AWQ'),
+        ('Qwen/Qwen2-VL-7B-Instruct-GPTQ-Int8', 'Qwen2-VL-7B-Instruct-GPTQ-Int8'),
+        ('Qwen/Qwen2-VL-7B-Instruct-GPTQ-Int4', 'Qwen2-VL-7B-Instruct-GPTQ-Int4'),
+        ('Qwen/Qwen2-VL-7B-Instruct-AWQ', 'Qwen2-VL-7B-Instruct-AWQ'),
+        ('Qwen/Qwen2-VL-72B-Instruct-GPTQ-Int8', 'Qwen2-VL-72B-Instruct-GPTQ-Int8'),
+        ('Qwen/Qwen2-VL-72B-Instruct-GPTQ-Int4', 'Qwen2-VL-72B-Instruct-GPTQ-Int4'),
+        ('Qwen/Qwen2-VL-72B-Instruct-AWQ', 'Qwen2-VL-72B-Instruct-AWQ'),
+        ('Qwen/QVQ-72B-Preview', 'QVQ-72B-Preview'),
+        ('Qwen/Qwen2.5-0.5B', 'Qwen2.5-0.5B'),
+        ('Qwen/Qwen2.5-1.5B', 'Qwen2.5-1.5B'),
+        ('Qwen/Qwen2.5-3B', 'Qwen2.5-3B'),
+        ('Qwen/Qwen2.5-7B', 'Qwen2.5-7B'),
+        ('Qwen/Qwen2.5-14B', 'Qwen2.5-14B'),
+        ('Qwen/Qwen2.5-32B', 'Qwen2.5-32B'),
+        ('Qwen/Qwen2.5-72B', 'Qwen2.5-72B'),
+        ('Qwen/Qwen2.5-0.5B-Instruct', 'Qwen2.5-0.5B-Instruct'),
+        ('Qwen/Qwen2.5-1.5B-Instruct', 'Qwen2.5-1.5B-Instruct'),
+        ('Qwen/Qwen2.5-3B-Instruct', 'Qwen2.5-3B-Instruct'),
+        ('Qwen/Qwen2.5-7B-Instruct', 'Qwen2.5-7B-Instruct'),
+        ('Qwen/Qwen2.5-14B-Instruct', 'Qwen2.5-14B-Instruct'),
+        ('Qwen/Qwen2.5-32B-Instruct', 'Qwen2.5-32B-Instruct'),
+        ('Qwen/Qwen2.5-72B-Instruct', 'Qwen2.5-72B-Instruct'),
+        ('Qwen/Qwen2.5-7B-Instruct-1M', 'Qwen2.5-7B-Instruct-1M'),
+        ('Qwen/Qwen2.5-14B-Instruct-1M', 'Qwen2.5-14B-Instruct-1M'),
+        ('Qwen/Qwen2.5-0.5B-Instruct-GPTQ-Int8', 'Qwen2.5-0.5B-Instruct-GPTQ-Int8'),
+        ('Qwen/Qwen2.5-0.5B-Instruct-GPTQ-Int4', 'Qwen2.5-0.5B-Instruct-GPTQ-Int4'),
+        ('Qwen/Qwen2.5-0.5B-Instruct-AWQ', 'Qwen2.5-0.5B-Instruct-AWQ'),
+        ('Qwen/Qwen2.5-1.5B-Instruct-GPTQ-Int8', 'Qwen2.5-1.5B-Instruct-GPTQ-Int8'),
+        ('Qwen/Qwen2.5-1.5B-Instruct-GPTQ-Int4', 'Qwen2.5-1.5B-Instruct-GPTQ-Int4'),
+        ('Qwen/Qwen2.5-1.5B-Instruct-AWQ', 'Qwen2.5-1.5B-Instruct-AWQ'),
+        ('Qwen/Qwen2.5-3B-Instruct-GPTQ-Int8', 'Qwen2.5-3B-Instruct-GPTQ-Int8'),
+        ('Qwen/Qwen2.5-3B-Instruct-GPTQ-Int4', 'Qwen2.5-3B-Instruct-GPTQ-Int4'),
+        ('Qwen/Qwen2.5-3B-Instruct-AWQ', 'Qwen2.5-3B-Instruct-AWQ'),
+        ('Qwen/Qwen2.5-7B-Instruct-GPTQ-Int8', 'Qwen2.5-7B-Instruct-GPTQ-Int8'),
+        ('Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4', 'Qwen2.5-7B-Instruct-GPTQ-Int4'),
+        ('Qwen/Qwen2.5-7B-Instruct-AWQ', 'Qwen2.5-7B-Instruct-AWQ'),
+        ('Qwen/Qwen2.5-14B-Instruct-GPTQ-Int8', 'Qwen2.5-14B-Instruct-GPTQ-Int8'),
+        ('Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4', 'Qwen2.5-14B-Instruct-GPTQ-Int4'),
+        ('Qwen/Qwen2.5-14B-Instruct-AWQ', 'Qwen2.5-14B-Instruct-AWQ'),
+        ('Qwen/Qwen2.5-32B-Instruct-GPTQ-Int8', 'Qwen2.5-32B-Instruct-GPTQ-Int8'),
+        ('Qwen/Qwen2.5-32B-Instruct-GPTQ-Int4', 'Qwen2.5-32B-Instruct-GPTQ-Int4'),
+        ('Qwen/Qwen2.5-32B-Instruct-AWQ', 'Qwen2.5-32B-Instruct-AWQ'),
+        ('Qwen/Qwen2.5-72B-Instruct-GPTQ-Int8', 'Qwen2.5-72B-Instruct-GPTQ-Int8'),
+        ('Qwen/Qwen2.5-72B-Instruct-GPTQ-Int4', 'Qwen2.5-72B-Instruct-GPTQ-Int4'),
+        ('Qwen/Qwen2.5-72B-Instruct-AWQ', 'Qwen2.5-72B-Instruct-AWQ'),
+        ('Qwen/Qwen2.5-Coder-0.5B', 'Qwen2.5-Coder-0.5B'),
+        ('Qwen/Qwen2.5-Coder-1.5B', 'Qwen2.5-Coder-1.5B'),
+        ('Qwen/Qwen2.5-Coder-3B', 'Qwen2.5-Coder-3B'),
+        ('Qwen/Qwen2.5-Coder-7B', 'Qwen2.5-Coder-7B'),
+        ('Qwen/Qwen2.5-Coder-14B', 'Qwen2.5-Coder-14B'),
+        ('Qwen/Qwen2.5-Coder-32B', 'Qwen2.5-Coder-32B'),
+        ('Qwen/Qwen2.5-Coder-0.5B-Instruct', 'Qwen2.5-Coder-0.5B-Instruct'),
+        ('Qwen/Qwen2.5-Coder-1.5B-Instruct', 'Qwen2.5-Math-1.5B-Instruct'),
+        ('Qwen/Qwen2.5-Coder-3B-Instruct', 'Qwen2.5-Coder-3B-Instruct'),
+        ('Qwen/Qwen2.5-Coder-7B-Instruct', 'Qwen2.5-Math-7B-Instruct'),
+        ('Qwen/Qwen2.5-Coder-14B-Instruct', 'Qwen2.5-Coder-14B-Instruct'),
+        ('Qwen/Qwen2.5-Coder-32B-Instruct', 'Qwen2.5-Coder-32B-Instruct'),
+        ('Qwen/Qwen2.5-Coder-72B-Instruct', 'Qwen2.5-Math-72B-Instruct'),
+        ('Qwen/Qwen2.5-Math-1.5B', 'Qwen2.5-Math-1.5B'),
+        ('Qwen/Qwen2.5-Math-7B', 'Qwen2.5-Math-7B'),
+        ('Qwen/Qwen2.5-Math-72B', 'Qwen2.5-Math-72B'),
+        ('Qwen/Qwen2.5-Omni-3B', 'Qwen2.5-Omni-3B'),
+        ('Qwen/Qwen2.5-Omni-7B', 'Qwen2.5-Omni-7B'),
+        ('Qwen/Qwen2.5-Omni-7B-GPTQ-Int4', 'Qwen2.5-Omni-7B-GPTQ-Int4'),
+        ('Qwen/Qwen2.5-Omni-7B-AWQ', 'Qwen2.5-Omni-7B-AWQ'),
+        ('Qwen/Qwen2.5-VL-3B-Instruct', 'Qwen2.5-VL-3B-Instruct'),
+        ('Qwen/Qwen2.5-VL-7B-Instruct', 'Qwen2.5-VL-7B-Instruct'),
+        ('Qwen/Qwen2.5-VL-32B-Instruct', 'Qwen2.5-VL-32B-Instruct'),
+        ('Qwen/Qwen2.5-VL-72B-Instruct', 'Qwen2.5-VL-72B-Instruct'),
+        ('Qwen/Qwen2.5-VL-3B-Instruct-AWQ', 'Qwen2.5-VL-3B-Instruct-AWQ'),
+        ('Qwen/Qwen2.5-VL-7B-Instruct-AWQ', 'Qwen2.5-VL-7B-Instruct-AWQ'),
+        ('Qwen/Qwen2.5-VL-72B-Instruct-AWQ', 'Qwen2.5-VL-72B-Instruct-AWQ'),
+        ('Qwen/QwQ-32B-Preview', 'QwQ-32B-Preview-Instruct'),
+        ('Qwen/QwQ-32B', 'QwQ-32B-Instruct'),
+        ('Qwen/Qwen3-0.6B-Base', 'Qwen3-0.6B-Base'),
+        ('Qwen/Qwen3-1.7B-Base', 'Qwen3-1.7B-Base'),
+        ('Qwen/Qwen3-4B-Base', 'Qwen3-4B-Base'),
+        ('Qwen/Qwen3-8B-Base', 'Qwen3-8B-Base'),
+        ('Qwen/Qwen3-14B-Base', 'Qwen3-14B-Base'),
+        ('Qwen/Qwen3-30B-A3B-Base', 'Qwen3-30B-A3B-Base'),
+        ('Qwen/Qwen3-0.6B', 'Qwen3-0.6B-Thinking'),
+        ('Qwen/Qwen3-1.7B', 'Qwen3-1.7B-Thinking'),
+        ('Qwen/Qwen3-4B', 'Qwen3-4B-Thinking'),
+        ('Qwen/Qwen3-4B-Thinking-2507', 'Qwen3-4B-Thinking-2507'),
+        ('Qwen/Qwen3-8B', 'Qwen3-8B-Thinking'),
+        ('Qwen/Qwen3-14B', 'Qwen3-14B-Thinking'),
+        ('Qwen/Qwen3-32B', 'Qwen3-32B-Thinking'),
+        ('Qwen/Qwen3-30B-A3B', 'Qwen3-30B-A3B-Thinking'),
+        ('Qwen/Qwen3-30B-A3B-Thinking-2507', 'Qwen3-30B-A3B-Thinking-2507'),
+        ('Qwen/Qwen3-235B-A22B', 'Qwen3-235B-A22B-Thinking'),
+        ('Qwen/Qwen3-235B-A22B-Thinking-2507', 'Qwen3-235B-A22B-Thinking-2507'),
+        ('Qwen/Qwen3-0.6B-GPTQ-Int8', 'Qwen3-0.6B-Thinking-GPTQ-Int8'),
+        ('Qwen/Qwen3-1.7B-GPTQ-Int8', 'Qwen3-1.7B-Thinking-GPTQ-Int8'),
+        ('Qwen/Qwen3-4B-AWQ', 'Qwen3-4B-Thinking-AWQ'),
+        ('Qwen/Qwen3-8B-AWQ', 'Qwen3-8B-Thinking-AWQ'),
+        ('Qwen/Qwen3-14B-AWQ', 'Qwen3-14B-Thinking-AWQ'),
+        ('Qwen/Qwen3-32B-AWQ', 'Qwen3-32B-Thinking-AWQ'),
+        ('Qwen/Qwen3-30B-A3B-GPTQ-Int4', 'Qwen3-30B-A3B-Thinking-GPTQ-Int4'),
+        ('Qwen/Qwen3-235B-A22B-GPTQ-Int4', 'Qwen3-235B-A22B-Thinking-GPTQ-Int4'),
+        ('Qwen/Qwen3-Next-80B-A3B-Thinking', 'Qwen3-Next-80B-A3B-Thinking'),
+        ('Qwen/Qwen3-4B-Instruct-2507', 'Qwen3-4B-Instruct-2507'),
+        ('Qwen/Qwen3-30B-A3B-Instruct-2507', 'Qwen3-30B-A3B-Instruct-2507'),
+        ('Qwen/Qwen3-235B-A22B-Instruct-2507', 'Qwen3-235B-A22B-Instruct-2507'),
+        ('Qwen/Qwen3-Next-80B-A3B-Instruct', 'Qwen3-Next-80B-A3B-Instruct'),
+        ('Qwen/Qwen3-VL-2B-Instruct', 'Qwen3-VL-2B-Instruct'),
+        ('Qwen/Qwen3-VL-4B-Instruct', 'Qwen3-VL-4B-Instruct'),
+        ('Qwen/Qwen3-VL-8B-Instruct', 'Qwen3-VL-8B-Instruct'),
+        ('Qwen/Qwen3-VL-32B-Instruct', 'Qwen3-VL-32B-Instruct'),
+        ('Qwen/Qwen3-VL-30B-A3B-Instruct', 'Qwen3-VL-30B-A3B-Instruct'),
+        ('Qwen/Qwen3-VL-235B-A22B-Instruct', 'Qwen3-VL-235B-A22B-Instruct'),
+        ('Qwen/Qwen3-VL-2B-Thinking', 'Qwen3-VL-2B-Thinking'),
+        ('Qwen/Qwen3-VL-4B-Thinking', 'Qwen3-VL-4B-Thinking'),
+        ('Qwen/Qwen3-VL-8B-Thinking', 'Qwen3-VL-8B-Thinking'),
+        ('Qwen/Qwen3-VL-32B-Thinking', 'Qwen3-VL-32B-Thinking'),
+        ('Qwen/Qwen3-VL-30B-A3B-Thinking', 'Qwen3-VL-30B-A3B-Thinking'),
+        ('Qwen/Qwen3-VL-235B-A22B-Thinking', 'Qwen3-VL-235B-A22B-Thinking'),
+        ('Qwen/Qwen3-Omni-30B-A3B-Captioner', 'Qwen3-Omni-30B-A3B-Captioner'),
+        ('Qwen/Qwen3-Omni-30B-A3B-Instruct', 'Qwen3-Omni-30B-A3B-Instruct'),
+        ('Qwen/Qwen3-Omni-30B-A3B-Thinking', 'Qwen3-Omni-30B-A3B-Thinking'),
+        ('Qwen/Qwen3.5-0.8B-Base', 'Qwen3.5-0.8B-Base'),
+        ('Qwen/Qwen3.5-2B-Base', 'Qwen3.5-2B-Base'),
+        ('Qwen/Qwen3.5-4B-Base', 'Qwen3.5-4B-Base'),
+        ('Qwen/Qwen3.5-9B-Base', 'Qwen3.5-9B-Base'),
+        ('Qwen/Qwen3.5-35B-A3B-Base', 'Qwen3.5-35B-A3B-Base'),
+        ('Qwen/Qwen3.5-0.8B', 'Qwen3.5-0.8B-Thinking'),
+        ('Qwen/Qwen3.5-2B', 'Qwen3.5-2B-Thinking'),
+        ('Qwen/Qwen3.5-4B', 'Qwen3.5-4B-Thinking'),
+        ('Qwen/Qwen3.5-9B', 'Qwen3.5-9B-Thinking'),
+        ('Qwen/Qwen3.5-27B', 'Qwen3.5-27B-Thinking'),
+        ('Qwen/Qwen3.5-35B-A3B', 'Qwen3.5-35B-A3B-Thinking'),
+        ('Qwen/Qwen3.5-122B-A10B', 'Qwen3.5-122B-A10B-Thinking'),
+        ('Qwen/Qwen3.5-397B-A17B', 'Qwen3.5-397B-A17B-Thinking'),
+    ],
+    'DeepSeek 系列': [
+        ('deepseek-ai/deepseek-llm-7b-base', 'DeepSeek-LLM-7B-Base'),
+        ('deepseek-ai/deepseek-llm-67b-base', 'DeepSeek-LLM-67B-Base'),
+        ('deepseek-ai/deepseek-llm-7b-chat', 'DeepSeek-LLM-7B-Chat'),
+        ('deepseek-ai/deepseek-llm-67b-chat', 'DeepSeek-LLM-67B-Chat'),
+        ('deepseek-ai/deepseek-math-7b-base', 'DeepSeek-Math-7B-Base'),
+        ('deepseek-ai/deepseek-math-7b-instruct', 'DeepSeek-Math-7B-Instruct'),
+        ('deepseek-ai/deepseek-moe-16b-base', 'DeepSeek-MoE-16B-Base'),
+        ('deepseek-ai/deepseek-moe-16b-chat', 'DeepSeek-MoE-16B-Chat'),
+        ('deepseek-ai/deepseek-coder-6.7b-base', 'DeepSeek-Coder-6.7B-Base'),
+        ('deepseek-ai/deepseek-coder-7b-base-v1.5', 'DeepSeek-Coder-7B-Base'),
+        ('deepseek-ai/deepseek-coder-33b-base', 'DeepSeek-Coder-33B-Base'),
+        ('deepseek-ai/deepseek-coder-6.7b-instruct', 'DeepSeek-Coder-6.7B-Instruct'),
+        ('deepseek-ai/deepseek-coder-7b-instruct-v1.5', 'DeepSeek-Coder-7B-Instruct'),
+        ('deepseek-ai/deepseek-coder-33b-instruct', 'DeepSeek-Coder-33B-Instruct'),
+        ('deepseek-ai/DeepSeek-V2-Lite', 'DeepSeek-V2-16B-Base'),
+        ('deepseek-ai/DeepSeek-V2', 'DeepSeek-V2-236B-Base'),
+        ('deepseek-ai/DeepSeek-V2-Lite-Chat', 'DeepSeek-V2-16B-Chat'),
+        ('deepseek-ai/DeepSeek-V2-Chat', 'DeepSeek-V2-236B-Chat'),
+        ('deepseek-ai/DeepSeek-V2-Chat-0628', 'DeepSeek-V2-0628-236B-Chat'),
+        ('deepseek-ai/DeepSeek-V2.5', 'DeepSeek-V2.5-236B-Chat'),
+        ('deepseek-ai/DeepSeek-V2.5-1210', 'DeepSeek-V2.5-1210-236B-Chat'),
+        ('deepseek-ai/DeepSeek-Coder-V2-Lite-Base', 'DeepSeek-Coder-V2-16B-Base'),
+        ('deepseek-ai/DeepSeek-Coder-V2-Base', 'DeepSeek-Coder-V2-236B-Base'),
+        ('deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct', 'DeepSeek-Coder-V2-16B-Instruct'),
+        ('deepseek-ai/DeepSeek-Coder-V2-Instruct', 'DeepSeek-Coder-V2-236B-Instruct'),
+        ('deepseek-ai/DeepSeek-V3-Base', 'DeepSeek-V3-671B-Base'),
+        ('deepseek-ai/DeepSeek-V3', 'DeepSeek-V3-671B-Chat'),
+        ('deepseek-ai/DeepSeek-V3-0324', 'DeepSeek-V3-0324-671B-Chat'),
+        ('deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B', 'DeepSeek-R1-1.5B-Distill'),
+        ('deepseek-ai/DeepSeek-R1-Distill-Qwen-7B', 'DeepSeek-R1-7B-Distill'),
+        ('deepseek-ai/DeepSeek-R1-Distill-Llama-8B', 'DeepSeek-R1-8B-Distill'),
+        ('deepseek-ai/DeepSeek-R1-Distill-Qwen-14B', 'DeepSeek-R1-14B-Distill'),
+        ('deepseek-ai/DeepSeek-R1-Distill-Qwen-32B', 'DeepSeek-R1-32B-Distill'),
+        ('deepseek-ai/DeepSeek-R1-Distill-Llama-70B', 'DeepSeek-R1-70B-Distill'),
+        ('deepseek-ai/DeepSeek-R1-Zero', 'DeepSeek-R1-671B-Chat-Zero'),
+        ('deepseek-ai/DeepSeek-R1', 'DeepSeek-R1-671B-Chat'),
+        ('deepseek-ai/DeepSeek-R1-0528-Qwen3-8B', 'DeepSeek-R1-0528-8B-Distill'),
+        ('deepseek-ai/DeepSeek-R1-0528', 'DeepSeek-R1-0528-671B-Chat'),
+    ],
+    'GLM / ChatGLM 系列': [
+        ('ZhipuAI/chatglm3-6b-base', 'ChatGLM3-6B-Base'),
+        ('ZhipuAI/chatglm3-6b', 'ChatGLM3-6B-Chat'),
+        ('ZhipuAI/glm-4-9b', 'GLM-4-9B'),
+        ('ZhipuAI/glm-4-9b-chat', 'GLM-4-9B-Chat'),
+        ('ZhipuAI/glm-4-9b-chat-1m', 'GLM-4-9B-1M-Chat'),
+        ('ZhipuAI/GLM-4-9B-0414', 'GLM-4-0414-9B-Chat'),
+        ('ZhipuAI/GLM-4-32B-Base-0414', 'GLM-4-0414-32B-Base'),
+        ('ZhipuAI/GLM-4-32B-0414', 'GLM-4-0414-32B-Chat'),
+        ('ZhipuAI/GLM-4.1V-9B-Base', 'GLM-4.1V-9B-Base'),
+        ('ZhipuAI/GLM-4.1V-9B-Thinking', 'GLM-4.1V-9B-Thinking'),
+        ('ZhipuAI/GLM-4.5-Air-Base', 'GLM-4.5-Air-Base'),
+        ('ZhipuAI/GLM-4.5-Base', 'GLM-4.5-Base'),
+        ('ZhipuAI/GLM-4.5-Air', 'GLM-4.5-Air-Thinking'),
+        ('ZhipuAI/GLM-4.5', 'GLM-4.5-Thinking'),
+        ('ZhipuAI/GLM-4.5V', 'GLM-4.5V-Air-Thinking'),
+        ('ZhipuAI/GLM-4.6V', 'GLM-4.6V'),
+        ('ZhipuAI/GLM-4.6V-Flash', 'GLM-4.6V-Flash'),
+        ('ZhipuAI/GLM-4.7-Flash', 'GLM-4.7-Flash'),
+        ('ZhipuAI/GLM-OCR', 'GLM-OCR'),
+        ('ZhipuAI/GLM-Z1-9B-0414', 'GLM-Z1-0414-9B-Chat'),
+        ('ZhipuAI/GLM-Z1-32B-0414', 'GLM-Z1-0414-32B-Chat'),
+    ],
+    'Llama 系列': [
+        ('skyline2006/llama-7b', 'Llama-7B'),
+        ('skyline2006/llama-13b', 'Llama-13B'),
+        ('skyline2006/llama-30b', 'Llama-30B'),
+        ('skyline2006/llama-65b', 'Llama-65B'),
+        ('modelscope/Llama-2-7b-ms', 'Llama-2-7B'),
+        ('modelscope/Llama-2-13b-ms', 'Llama-2-13B'),
+        ('modelscope/Llama-2-70b-ms', 'Llama-2-70B'),
+        ('modelscope/Llama-2-7b-chat-ms', 'Llama-2-7B-Chat'),
+        ('modelscope/Llama-2-13b-chat-ms', 'Llama-2-13B-Chat'),
+        ('modelscope/Llama-2-70b-chat-ms', 'Llama-2-70B-Chat'),
+        ('LLM-Research/Meta-Llama-3-8B', 'Llama-3-8B'),
+        ('LLM-Research/Meta-Llama-3-70B', 'Llama-3-70B'),
+        ('LLM-Research/Meta-Llama-3-8B-Instruct', 'Llama-3-8B-Instruct'),
+        ('LLM-Research/Meta-Llama-3-70B-Instruct', 'Llama-3-70B-Instruct'),
+        ('LLM-Research/Llama3-8B-Chinese-Chat', 'Llama-3-8B-Chinese-Chat'),
+        ('LLM-Research/Meta-Llama-3.1-8B', 'Llama-3.1-8B'),
+        ('LLM-Research/Meta-Llama-3.1-70B', 'Llama-3.1-70B'),
+        ('LLM-Research/Meta-Llama-3.1-405B', 'Llama-3.1-405B'),
+        ('LLM-Research/Meta-Llama-3.1-8B-Instruct', 'Llama-3.1-8B-Instruct'),
+        ('LLM-Research/Meta-Llama-3.1-70B-Instruct', 'Llama-3.1-70B-Instruct'),
+        ('LLM-Research/Meta-Llama-3.1-405B-Instruct', 'Llama-3.1-405B-Instruct'),
+        ('XD_AI/Llama3.1-8B-Chinese-Chat', 'Llama-3.1-8B-Chinese-Chat'),
+        ('XD_AI/Llama3.1-70B-Chinese-Chat', 'Llama-3.1-70B-Chinese-Chat'),
+        ('LLM-Research/Llama-3.2-1B', 'Llama-3.2-1B'),
+        ('LLM-Research/Llama-3.2-3B', 'Llama-3.2-3B'),
+        ('LLM-Research/Llama-3.2-1B-Instruct', 'Llama-3.2-1B-Instruct'),
+        ('LLM-Research/Llama-3.2-3B-Instruct', 'Llama-3.2-3B-Instruct'),
+        ('LLM-Research/Llama-3.2-11B-Vision', 'Llama-3.2-11B-Vision'),
+        ('LLM-Research/Llama-3.2-11B-Vision-Instruct', 'Llama-3.2-11B-Vision-Instruct'),
+        ('LLM-Research/Llama-3.2-90B-Vision', 'Llama-3.2-90B-Vision'),
+        ('LLM-Research/Llama-3.2-90B-Vision-Instruct', 'Llama-3.2-90B-Vision-Instruct'),
+        ('LLM-Research/Llama-3.3-70B-Instruct', 'Llama-3.3-70B-Instruct'),
+        ('LLM-Research/Llama-4-Scout-17B-16E', 'Llama-4-Scout-17B-16E'),
+        ('LLM-Research/Llama-4-Scout-17B-16E-Instruct', 'Llama-4-Scout-17B-16E-Instruct'),
+        ('LLM-Research/Llama-4-Maverick-17B-128E', 'Llama-4-Maverick-17B-128E'),
+        ('LLM-Research/Llama-4-Maverick-17B-128E-Instruct', 'Llama-4-Maverick-17B-128E-Instruct'),
+        ('shenzhi-wang/Llama3-70B-Chinese-Chat', 'Llama-3-70B-Chinese-Chat'),
+    ],
+    'Gemma 系列': [
+        ('AI-ModelScope/gemma-2b', 'Gemma-2B'),
+        ('AI-ModelScope/gemma-2b-it', 'Gemma-7B'),
+        ('AI-ModelScope/gemma-7b', 'Gemma-2B-Instruct'),
+        ('AI-ModelScope/gemma-7b-it', 'Gemma-7B-Instruct'),
+        ('LLM-Research/gemma-2-2b', 'Gemma-2-2B'),
+        ('LLM-Research/gemma-2-9b', 'Gemma-2-9B'),
+        ('LLM-Research/gemma-2-27b', 'Gemma-2-27B'),
+        ('LLM-Research/gemma-2-2b-it', 'Gemma-2-2B-Instruct'),
+        ('LLM-Research/gemma-2-9b-it', 'Gemma-2-9B-Instruct'),
+        ('LLM-Research/gemma-2-27b-it', 'Gemma-2-27B-Instruct'),
+        ('LLM-Research/gemma-3-270m', 'Gemma-3-270M'),
+        ('LLM-Research/gemma-3-1b-pt', 'Gemma-3-1B'),
+        ('LLM-Research/gemma-3-270m-it', 'Gemma-3-270M-Instruct'),
+        ('LLM-Research/gemma-3-1b-it', 'Gemma-3-1B-Instruct'),
+        ('LLM-Research/gemma-3-4b-pt', 'Gemma-3-4B'),
+        ('LLM-Research/gemma-3-12b-pt', 'Gemma-3-12B'),
+        ('LLM-Research/gemma-3-27b-pt', 'Gemma-3-27B'),
+        ('LLM-Research/gemma-3-4b-it', 'Gemma-3-4B-Instruct'),
+        ('LLM-Research/gemma-3-12b-it', 'Gemma-3-12B-Instruct'),
+        ('LLM-Research/gemma-3-27b-it', 'Gemma-3-27B-Instruct'),
+        ('google/medgemma-4b-pt', 'MedGemma-4B'),
+        ('google/medgemma-4b-it', 'MedGemma-4B-Instruct'),
+        ('google/medgemma-27b-text-it', 'MedGemma-27B-Instruct'),
+        ('LLM-Research/gemma-3n-E2B', 'Gemma-3n-E2B'),
+        ('LLM-Research/gemma-3n-E4B', 'Gemma-3n-E4B'),
+        ('LLM-Research/gemma-3n-E2B-it', 'Gemma-3n-E2B-Instruct'),
+        ('LLM-Research/gemma-3n-E4B-it', 'Gemma-3n-E4B-Instruct'),
+        ('google/codegemma-7b', 'CodeGemma-7B'),
+        ('google/codegemma-1.1-2b', 'CodeGemma-1.1-2B'),
+        ('google/codegemma-1.1-7b-it', 'CodeGemma-1.1-7B-Instruct'),
+        ('google/gemma-1.1-2b-it', 'Gemma-1.1-2B-Instruct'),
+        ('google/gemma-1.1-7b-it', 'Gemma-1.1-7B-Instruct'),
+        ('google/gemma-4-26B-A4B-it', 'Gemma-4-26B-A4B-Thinking'),
+        ('google/gemma-4-31B-it', 'Gemma-4-31B-Thinking'),
+        ('google/gemma-4-E2B-it', 'Gemma-4-E2B-Thinking'),
+        ('google/gemma-4-E4B-it', 'Gemma-4-E4B-Thinking'),
+    ],
+    'Mistral / Mixtral 系列': [
+        ('AI-ModelScope/Mistral-7B-v0.1', 'Mistral-7B-v0.1'),
+        ('AI-ModelScope/Mistral-7B-v0.2-hf', 'Mistral-7B-v0.2'),
+        ('LLM-Research/mistral-7b-v0.3', 'Mistral-7B-v0.3'),
+        ('AI-ModelScope/Mistral-7B-Instruct-v0.1', 'Mistral-7B-Instruct-v0.1'),
+        ('AI-ModelScope/Mistral-7B-Instruct-v0.2', 'Mistral-7B-Instruct-v0.2'),
+        ('LLM-Research/Mistral-7B-Instruct-v0.3', 'Mistral-7B-Instruct-v0.3'),
+        ('LLM-Research/Mistral-Nemo-Base-2407', 'Mistral-Nemo-Base-2407'),
+        ('AI-ModelScope/Mistral-Nemo-Instruct-2407', 'Mistral-Nemo-Instruct-2407'),
+        ('mistralai/Ministral-8B-Instruct-2410', 'Ministral-8B-Instruct-2410'),
+        ('mistralai/Ministral-3-3B-Base-2512', 'Ministral-3-3B-Base-2512'),
+        ('mistralai/Ministral-3-8B-Base-2512', 'Ministral-3-8B-Base-2512'),
+        ('mistralai/Ministral-3-14B-Base-2512', 'Ministral-3-14B-Base-2512'),
+        ('mistralai/Ministral-3-3B-Instruct-2512', 'Ministral-3-3B-Instruct-2512'),
+        ('mistralai/Ministral-3-8B-Instruct-2512', 'Ministral-3-8B-Instruct-2512'),
+        ('mistralai/Ministral-3-14B-Instruct-2512', 'Ministral-3-14B-Instruct-2512'),
+        ('mistralai/Mistral-Small-24B-Base-2501', 'Mistral-Small-24B-Base-2501'),
+        ('mistralai/Mistral-Small-24B-Instruct-2501', 'Mistral-Small-24B-Instruct-2501'),
+        ('mistralai/Mistral-Small-3.1-24B-Base-2503', 'Mistral-Small-3.1-24B-Base'),
+        ('mistralai/Mistral-Small-3.1-24B-Instruct-2503', 'Mistral-Small-3.1-24B-Instruct'),
+        ('mistralai/Mistral-Small-3.2-24B-Instruct-2506', 'Mistral-Small-3.2-24B-Instruct'),
+        ('mistralai/Devstral-Small-2507', 'Devstral-Small-2507-Instruct'),
+        ('AI-ModelScope/Mixtral-8x7B-v0.1', 'Mixtral-8x7B-v0.1'),
+        ('AI-ModelScope/Mixtral-8x22B-v0.1', 'Mixtral-8x22B-v0.1'),
+        ('AI-ModelScope/Mixtral-8x7B-Instruct-v0.1', 'Mixtral-8x7B-v0.1-Instruct'),
+        ('AI-ModelScope/Mixtral-8x22B-Instruct-v0.1', 'Mixtral-8x22B-v0.1-Instruct'),
+    ],
+    'InternLM 系列': [
+        ('Shanghai_AI_Laboratory/internlm2-7b', 'InternLM2-7B'),
+        ('Shanghai_AI_Laboratory/internlm2-20b', 'InternLM2-20B'),
+        ('Shanghai_AI_Laboratory/internlm2-chat-7b', 'InternLM2-7B-Chat'),
+        ('Shanghai_AI_Laboratory/internlm2-chat-20b', 'InternLM2-20B-Chat'),
+        ('Shanghai_AI_Laboratory/internlm2_5-1_8b', 'InternLM2.5-1.8B'),
+        ('Shanghai_AI_Laboratory/internlm2_5-7b', 'InternLM2.5-7B'),
+        ('Shanghai_AI_Laboratory/internlm2_5-20b', 'InternLM2.5-20B'),
+        ('Shanghai_AI_Laboratory/internlm2_5-1_8b-chat', 'InternLM2.5-1.8B-Chat'),
+        ('Shanghai_AI_Laboratory/internlm2_5-7b-chat', 'InternLM2.5-7B-Chat'),
+        ('Shanghai_AI_Laboratory/internlm2_5-7b-chat-1m', 'InternLM2.5-7B-1M-Chat'),
+        ('Shanghai_AI_Laboratory/internlm2_5-20b-chat', 'InternLM2.5-20B-Chat'),
+        ('Shanghai_AI_Laboratory/internlm3-8b-instruct', 'InternLM3-8B-Chat'),
+        ('Shanghai_AI_Laboratory/Intern-S1-mini', 'Intern-S1-mini'),
+    ],
+    'InternVL 系列': [
+        ('OpenGVLab/InternVL2_5-2B-MPO-hf', 'InternVL2.5-2B-MPO'),
+        ('OpenGVLab/InternVL2_5-8B-MPO-hf', 'InternVL2.5-8B-MPO'),
+        ('OpenGVLab/InternVL3-1B-hf', 'InternVL3-1B-hf'),
+        ('OpenGVLab/InternVL3-2B-hf', 'InternVL3-2B-hf'),
+        ('OpenGVLab/InternVL3-8B-hf', 'InternVL3-8B-hf'),
+        ('OpenGVLab/InternVL3-14B-hf', 'InternVL3-14B-hf'),
+        ('OpenGVLab/InternVL3-38B-hf', 'InternVL3-38B-hf'),
+        ('OpenGVLab/InternVL3-78B-hf', 'InternVL3-78B-hf'),
+        ('OpenGVLab/InternVL3_5-1B-HF', 'InternVL3.5-1B-hf'),
+        ('OpenGVLab/InternVL3_5-2B-HF', 'InternVL3.5-2B-hf'),
+        ('OpenGVLab/InternVL3_5-4B-HF', 'InternVL3.5-4B-hf'),
+        ('OpenGVLab/InternVL3_5-8B-HF', 'InternVL3.5-8B-hf'),
+        ('OpenGVLab/InternVL3_5-14B-HF', 'InternVL3.5-14B-hf'),
+        ('OpenGVLab/InternVL3_5-30B-A3B-HF', 'InternVL3.5-30B-A3B-hf'),
+        ('OpenGVLab/InternVL3_5-38B-HF', 'InternVL3.5-38B-hf'),
+    ],
+    'Phi 系列': [
+        ('LLM-Research/Phi-3-mini-4k-instruct', 'Phi-3-4B-4k-Instruct'),
+        ('LLM-Research/Phi-3-mini-128k-instruct', 'Phi-3-4B-128k-Instruct'),
+        ('LLM-Research/Phi-3-small-8k-instruct', 'Phi-3-7B-8k-Instruct'),
+        ('LLM-Research/Phi-3-small-128k-instruct', 'Phi-3-7B-128k-Instruct'),
+        ('LLM-Research/Phi-3-medium-4k-instruct', 'Phi-3-14B-8k-Instruct'),
+        ('LLM-Research/Phi-3-medium-128k-instruct', 'Phi-3-14B-128k-Instruct'),
+        ('LLM-Research/Phi-3.5-mini-instruct', 'Phi-3.5-4B-instruct'),
+        ('LLM-Research/Phi-3.5-MoE-instruct', 'Phi-3.5-MoE-42B-A6.6B-instruct'),
+        ('LLM-Research/phi-4', 'Phi-4-14B-Instruct'),
+        ('LLM-Research/Phi-4-mini-instruct', 'Phi-4-3.8B-instruct'),
+    ],
+    'Falcon 系列': [
+        ('AI-ModelScope/falcon-7b', 'Falcon-7B'),
+        ('AI-ModelScope/falcon-40b', 'Falcon-40B'),
+        ('modelscope/falcon-180B', 'Falcon-180B'),
+        ('AI-ModelScope/falcon-7b-instruct', 'Falcon-7B-Instruct'),
+        ('AI-ModelScope/falcon-40b-instruct', 'Falcon-40B-Instruct'),
+        ('modelscope/falcon-180B-chat', 'Falcon-180B-Chat'),
+        ('tiiuae/falcon-11B', 'Falcon-11B'),
+        ('tiiuae/Falcon-H1-0.5B-Base', 'Falcon-H1-0.5B-Base'),
+        ('tiiuae/Falcon-H1-1.5B-Base', 'Falcon-H1-1.5B-Base'),
+        ('tiiuae/Falcon-H1-1.5B-Deep-Base', 'Falcon-H1-1.5B-Deep-Base'),
+        ('tiiuae/Falcon-H1-3B-Base', 'Falcon-H1-3B-Base'),
+        ('tiiuae/Falcon-H1-7B-Base', 'Falcon-H1-7B-Base'),
+        ('tiiuae/Falcon-H1-34B-Base', 'Falcon-H1-34B-Base'),
+        ('tiiuae/Falcon-H1-0.5B-Instruct', 'Falcon-H1-0.5B-Instruct'),
+        ('tiiuae/Falcon-H1-1.5B-Instruct', 'Falcon-H1-1.5B-Instruct'),
+        ('tiiuae/Falcon-H1-1.5B-Deep-Instruct', 'Falcon-H1-1.5B-Deep-Instruct'),
+        ('tiiuae/Falcon-H1-3B-Instruct', 'Falcon-H1-3B-Instruct'),
+        ('tiiuae/Falcon-H1-7B-Instruct', 'Falcon-H1-7B-Instruct'),
+        ('tiiuae/Falcon-H1-34B-Instruct', 'Falcon-H1-34B-Instruct'),
+    ],
+    'MiniCPM 系列': [
+        ('OpenBMB/MiniCPM-V-4_6', 'MiniCPM-V-4_6'),
+        ('OpenBMB/MiniCPM4-0.5B', 'MiniCPM4-0.5B-Chat'),
+        ('OpenBMB/MiniCPM4-8B', 'MiniCPM4-8B-Chat'),
+        ('OpenBMB/MiniCPM4.1-8B', 'MiniCPM4.1-8B-Chat'),
+        ('OpenBMB/MiniCPM-o-2_6', 'MiniCPM-o-2.6'),
+        ('OpenBMB/MiniCPM-o-4_5', 'MiniCPM-o-4_5'),
+        ('OpenBMB/MiniCPM-V-2_6', 'MiniCPM-V-2.6'),
+        ('OpenBMB/MiniCPM-V-4', 'MiniCPM-V-4'),
+        ('OpenBMB/MiniCPM-V-4_5', 'MiniCPM-V-4.5'),
+    ],
+    'Yi 系列': [
+        ('01ai/Yi-6B', 'Yi-6B'),
+        ('01ai/Yi-9B', 'Yi-9B'),
+        ('01ai/Yi-34B', 'Yi-34B'),
+        ('01ai/Yi-6B-Chat', 'Yi-6B-Chat'),
+        ('01ai/Yi-34B-Chat', 'Yi-34B-Chat'),
+        ('01ai/Yi-6B-Chat-8bits', 'Yi-6B-Chat-8bits'),
+        ('01ai/Yi-6B-Chat-4bits', 'Yi-6B-Chat-4bits'),
+        ('01ai/Yi-34B-Chat-8bits', 'Yi-34B-Chat-8bits'),
+        ('01ai/Yi-34B-Chat-4bits', 'Yi-34B-Chat-4bits'),
+        ('01ai/Yi-1.5-6B', 'Yi-1.5-6B'),
+        ('01ai/Yi-1.5-9B', 'Yi-1.5-9B'),
+        ('01ai/Yi-1.5-34B', 'Yi-1.5-34B'),
+        ('01ai/Yi-1.5-6B-Chat', 'Yi-1.5-6B-Chat'),
+        ('01ai/Yi-1.5-9B-Chat', 'Yi-1.5-9B-Chat'),
+        ('01ai/Yi-1.5-34B-Chat', 'Yi-1.5-34B-Chat'),
+        ('01ai/Yi-Coder-1.5B', 'Yi-Coder-1.5B'),
+        ('01ai/Yi-Coder-9B', 'Yi-Coder-9B'),
+        ('01ai/Yi-Coder-1.5B-Chat', 'Yi-Coder-1.5B-Chat'),
+        ('01ai/Yi-Coder-9B-Chat', 'Yi-Coder-9B-Chat'),
+        ('BUAADreamer/Yi-VL-6B-hf', 'Yi-VL-6B-Chat'),
+        ('BUAADreamer/Yi-VL-34B-hf', 'Yi-VL-34B-Chat'),
+    ],
+    'Hunyuan 系列': [
+        ('Tencent-Hunyuan/Hunyuan-0.5B-Instruct', 'Hunyuan-0.5B-Instruct'),
+        ('Tencent-Hunyuan/Hunyuan-1.8B-Instruct', 'Hunyuan-1.8B-Instruct'),
+        ('Tencent-Hunyuan/Hunyuan-4B-Instruct', 'Hunyuan-4B-Instruct'),
+        ('Tencent-Hunyuan/Hunyuan-7B-Instruct', 'Hunyuan-7B-Instruct'),
+        ('Tencent-Hunyuan/Hunyuan-MT-7B', 'Hunyuan-MT-7B-Instruct'),
+        ('Tencent-Hunyuan/HY-MT1.5-7B', 'HY-MT1.5-7B-Instruct'),
+        ('Tencent-Hunyuan/HY-MT1.5-1.8B', 'HY-MT1.5-1.8B-Instruct'),
+        ('Tencent-Hunyuan/Hunyuan-A13B-Instruct', 'Hunyuan-A13B-Instruct'),
+        ('tencent/Hy3-preview', 'Hy3-Preview'),
+    ],
+    'MiMo 系列': [
+        ('XiaomiMiMo/MiMo-7B-Base', 'MiMo-7B-Base'),
+        ('XiaomiMiMo/MiMo-7B-SFT', 'MiMo-7B-Instruct'),
+        ('XiaomiMiMo/MiMo-7B-RL', 'MiMo-7B-Instruct-RL'),
+        ('XiaomiMiMo/MiMo-7B-RL-ZERO', 'MiMo-7B-RL-ZERO'),
+        ('XiaomiMiMo/MiMo-V2-Flash-Base', 'MiMo-V2-Flash-Base'),
+        ('XiaomiMiMo/MiMo-V2-Flash', 'MiMo-V2-Flash'),
+        ('XiaomiMiMo/MiMo-VL-7B-RL', 'MiMo-7B-VL-RL'),
+        ('XiaomiMiMo/MiMo-VL-7B-RL-2508', 'MiMo-VL-7B-RL-2508'),
+        ('XiaomiMiMo/MiMo-VL-7B-SFT', 'MiMo-7B-VL-Instruct'),
+        ('XiaomiMiMo/MiMo-VL-7B-SFT-2508', 'MiMo-VL-7B-SFT-2508'),
+    ],
+    'MiniMax 系列': [
+        ('MiniMaxAI/MiniMax-Text-01', 'MiniMax-Text-01-Instruct'),
+        ('MiniMaxAI/MiniMax-M1-40k-hf', 'MiniMax-M1-40k-Thinking'),
+        ('MiniMaxAI/MiniMax-M1-80k-hf', 'MiniMax-M1-80k-Thinking'),
+        ('MiniMaxAI/MiniMax-M2', 'MiniMax-M2-Thinking'),
+        ('MiniMaxAI/MiniMax-M2.1', 'MiniMax-M2.1-Thinking'),
+    ],
+    'Kimi 系列': [
+        ('moonshotai/Kimi-Dev-72B', 'Kimi-Dev-72B-Instruct'),
+        ('moonshotai/Kimi-VL-A3B-Instruct', 'Kimi-VL-A3B-Instruct'),
+        ('moonshotai/Kimi-VL-A3B-Thinking', 'Kimi-VL-A3B-Thinking'),
+        ('moonshotai/Kimi-VL-A3B-Thinking-2506', 'Kimi-VL-A3B-Thinking-2506'),
+        ('moonshotai/Moonlight-16B-A3B', 'Moonlight-16B-A3B'),
+        ('moonshotai/Moonlight-16B-A3B-Instruct', 'Moonlight-16B-A3B-Instruct'),
+    ],
+    'LLaVA 系列': [
+        ('swift/llava-1.5-7b-hf', 'LLaVA-1.5-7B-Chat'),
+        ('swift/llava-1.5-13b-hf', 'LLaVA-1.5-13B-Chat'),
+        ('swift/llava-v1.6-vicuna-7b-hf', 'LLaVA-NeXT-7B-Chat'),
+        ('swift/llava-v1.6-vicuna-13b-hf', 'LLaVA-NeXT-13B-Chat'),
+        ('swift/llava-v1.6-mistral-7b-hf', 'LLaVA-NeXT-Mistral-7B-Chat'),
+        ('swift/llama3-llava-next-8b-hf', 'LLaVA-NeXT-Llama3-8B-Chat'),
+        ('LLM-Research/llava-v1.6-34b-hf', 'LLaVA-NeXT-34B-Chat'),
+        ('AI-ModelScope/llava-next-72b-hf', 'LLaVA-NeXT-72B-Chat'),
+        ('AI-ModelScope/llava-next-110b-hf', 'LLaVA-NeXT-110B-Chat'),
+        ('swift/LLaVA-NeXT-Video-7B-hf', 'LLaVA-NeXT-Video-7B-Chat'),
+        ('swift/LLaVA-NeXT-Video-7B-DPO-hf', 'LLaVA-NeXT-Video-7B-DPO-Chat'),
+        ('swift/LLaVA-NeXT-Video-7B-32K-hf', 'LLaVA-NeXT-Video-7B-32k-Chat'),
+        ('swift/LLaVA-NeXT-Video-34B-hf', 'LLaVA-NeXT-Video-34B-Chat'),
+        ('llava-hf/LLaVA-NeXT-Video-34B-DPO-hf', 'LLaVA-NeXT-Video-34B-DPO-Chat'),
+        ('LanguageBind/Video-LLaVA-7B-hf', 'Video-LLaVA-7B-Chat'),
+    ],
+    '其他模型': [
+        ('AI-ModelScope/bloom-560m', 'BLOOM-560M'),
+        ('AI-ModelScope/bloom-3b', 'BLOOM-3B'),
+        ('AI-ModelScope/bloom-7b1', 'BLOOM-7B1'),
+        ('AI-ModelScope/bloomz-560m', 'BLOOMZ-560M'),
+        ('AI-ModelScope/bloomz-3b', 'BLOOMZ-3B'),
+        ('AI-ModelScope/bloomz-7b1-mt', 'BLOOMZ-7B1-mt'),
+        ('AI-ModelScope/chinese-llama-2-1.3b', 'Chinese-Llama-2-1.3B'),
+        ('AI-ModelScope/chinese-llama-2-7b', 'Chinese-Llama-2-7B'),
+        ('AI-ModelScope/chinese-llama-2-13b', 'Chinese-Llama-2-13B'),
+        ('AI-ModelScope/chinese-alpaca-2-1.3b', 'Chinese-Alpaca-2-1.3B-Chat'),
+        ('AI-ModelScope/chinese-alpaca-2-7b', 'Chinese-Alpaca-2-7B-Chat'),
+        ('AI-ModelScope/chinese-alpaca-2-13b', 'Chinese-Alpaca-2-13B-Chat'),
+        ('AI-ModelScope/codegemma-7b-it', 'CodeGemma-7B-Instruct'),
+        ('swift/Codestral-22B-v0.1', 'Codestral-22B-v0.1-Chat'),
+        ('AI-ModelScope/c4ai-command-r-v01', 'CommandR-35B-Chat'),
+        ('AI-ModelScope/c4ai-command-r-plus', 'CommandR-Plus-104B-Chat'),
+        ('mirror013/c4ai-command-r-v01-4bit', 'CommandR-35B-4bit-Chat'),
+        ('AI-ModelScope/dbrx-base', 'DBRX-132B-Base'),
+        ('AI-ModelScope/dbrx-instruct', 'DBRX-132B-Instruct'),
+        ('rednote-hilab/dots.ocr', 'dots.ocr'),
+        ('PaddlePaddle/ERNIE-4.5-0.3B-PT', 'ERNIE-4.5-0.3B-Instruct'),
+        ('PaddlePaddle/ERNIE-4.5-21B-A3B-PT', 'ERNIE-4.5-21B-A3B-Instruct'),
+        ('PaddlePaddle/ERNIE-4.5-21B-A3B-Thinking', 'ERNIE-4.5-21B-A3B-Thinking'),
+        ('PaddlePaddle/ERNIE-4.5-300B-A47B-PT', 'ERNIE-4.5-300B-A47B-Instruct'),
+        ('PaddlePaddle/ERNIE-4.5-VL-28B-A3B-PT', 'ERNIE-4.5-VL-28B-A3B-Instruct'),
+        ('PaddlePaddle/ERNIE-4.5-VL-28B-A3B-Thinking', 'ERNIE-4.5-VL-28B-A3B-Thinking'),
+        ('PaddlePaddle/ERNIE-4.5-VL-424B-A47B-PT', 'ERNIE-4.5-VL-424B-A47B-Instruct'),
+        ('AI-ModelScope/gpt2', 'GPT-2-Small'),
+        ('AI-ModelScope/gpt2-medium', 'GPT-2-Medium'),
+        ('AI-ModelScope/gpt2-large', 'GPT-2-Large'),
+        ('goodbai95/GPT2-xl', 'GPT-2-XL'),
+        ('openai/gpt-oss-20b', 'GPT-OSS-20B-Thinking'),
+        ('openai/gpt-oss-120b', 'GPT-OSS-120B-Thinking'),
+        ('AI-ModelScope/granite-3.0-1b-a400m-base', 'Granite-3.0-1B-A400M-Base'),
+        ('AI-ModelScope/granite-3.0-3b-a800m-base', 'Granite-3.0-3B-A800M-Base'),
+        ('AI-ModelScope/granite-3.0-2b-base', 'Granite-3.0-2B-Base'),
+        ('AI-ModelScope/granite-3.0-8b-base', 'Granite-3.0-8B-Base'),
+        ('AI-ModelScope/granite-3.0-1b-a400m-instruct', 'Granite-3.0-1B-A400M-Instruct'),
+        ('AI-ModelScope/granite-3.0-3b-a800m-instruct', 'Granite-3.0-3B-A800M-Instruct'),
+        ('AI-ModelScope/granite-3.0-2b-instruct', 'Granite-3.0-2B-Instruct'),
+        ('AI-ModelScope/granite-3.0-8b-instruct', 'Granite-3.0-8B-Instruct'),
+        ('AI-ModelScope/granite-3.1-1b-a400m-base', 'Granite-3.1-1B-A400M-Base'),
+        ('AI-ModelScope/granite-3.1-3b-a800m-base', 'Granite-3.1-3B-A800M-Base'),
+        ('AI-ModelScope/granite-3.1-2b-base', 'Granite-3.1-2B-Base'),
+        ('AI-ModelScope/granite-3.1-8b-base', 'Granite-3.1-8B-Base'),
+        ('AI-ModelScope/granite-3.1-1b-a400m-instruct', 'Granite-3.1-1B-A400M-Instruct'),
+        ('AI-ModelScope/granite-3.1-3b-a800m-instruct', 'Granite-3.1-3B-A800M-Instruct'),
+        ('AI-ModelScope/granite-3.1-2b-instruct', 'Granite-3.1-2B-Instruct'),
+        ('AI-ModelScope/granite-3.1-8b-instruct', 'Granite-3.1-8B-Instruct'),
+        ('AI-ModelScope/granite-3.2-2b-instruct', 'Granite-3.2-2B-Instruct'),
+        ('AI-ModelScope/granite-3.2-8b-instruct', 'Granite-3.2-8B-Instruct'),
+        ('AI-ModelScope/granite-3.3-2b-base', 'Granite-3.3-2B-Base'),
+        ('AI-ModelScope/granite-3.3-8b-base', 'Granite-3.3-8B-Base'),
+        ('AI-ModelScope/granite-3.3-2b-instruct', 'Granite-3.3-2B-Instruct'),
+        ('AI-ModelScope/granite-3.3-8b-instruct', 'Granite-3.3-8B-Instruct'),
+        ('AI-ModelScope/granite-vision-3.2-2b', 'Granite-Vision-3.2-2B'),
+        ('ibm-granite/granite-4.0-tiny-preview', 'Granite-4.0-tiny-preview'),
+        ('IndexTeam/Index-1.9B', 'Index-1.9B-Base'),
+        ('IndexTeam/Index-1.9B-Pure', 'Index-1.9B-Base-Pure'),
+        ('IndexTeam/Index-1.9B-Chat', 'Index-1.9B-Chat'),
+        ('IndexTeam/Index-1.9B-Character', 'Index-1.9B-Character-Chat'),
+        ('IndexTeam/Index-1.9B-32K', 'Index-1.9B-Chat-32K'),
+        ('AI-ModelScope/Jamba-v0.1', 'Jamba-v0.1'),
+        ('Kwai-Keye/Keye-VL-8B-Preview', 'Keye-VL-8B-Chat'),
+        ('facebook/MobileLLM-R1-140M-base', 'MobileLLM-R1-140M-Base'),
+        ('facebook/MobileLLM-R1-360M-base', 'MobileLLM-R1-360M-Base'),
+        ('facebook/MobileLLM-R1-950M-base', 'MobileLLM-R1-950M-Base'),
+        ('facebook/MobileLLM-R1-140M', 'MobileLLM-R1-140M-Instruct'),
+        ('facebook/MobileLLM-R1-360M', 'MobileLLM-R1-360M-Instruct'),
+        ('facebook/MobileLLM-R1-950M', 'MobileLLM-R1-950M-Instruct'),
+        ('xcwzxcwz/openchat-3.5-0106', 'OpenChat3.5-7B-Chat'),
+        ('infly/OpenCoder-1.5B-Base', 'OpenCoder-1.5B-Base'),
+        ('infly/OpenCoder-8B-Base', 'OpenCoder-8B-Base'),
+        ('infly/OpenCoder-1.5B-Instruct', 'OpenCoder-1.5B-Instruct'),
+        ('infly/OpenCoder-8B-Instruct', 'OpenCoder-8B-Instruct'),
+        ('AI-ModelScope/paligemma-3b-pt-224', 'PaliGemma-3B-pt-224'),
+        ('AI-ModelScope/paligemma-3b-pt-448', 'PaliGemma-3B-pt-448'),
+        ('AI-ModelScope/paligemma-3b-pt-896', 'PaliGemma-3B-pt-896'),
+        ('AI-ModelScope/paligemma-3b-mix-224', 'PaliGemma-3B-mix-224'),
+        ('AI-ModelScope/paligemma-3b-mix-448', 'PaliGemma-3B-mix-448'),
+        ('AI-ModelScope/paligemma2-3b-pt-224', 'PaliGemma2-3B-pt-224'),
+        ('AI-ModelScope/paligemma2-3b-pt-448', 'PaliGemma2-3B-pt-448'),
+        ('AI-ModelScope/paligemma2-3b-pt-896', 'PaliGemma2-3B-pt-896'),
+        ('AI-ModelScope/paligemma2-10b-pt-224', 'PaliGemma2-10B-pt-224'),
+        ('AI-ModelScope/paligemma2-10b-pt-448', 'PaliGemma2-10B-pt-448'),
+        ('AI-ModelScope/paligemma2-10b-pt-896', 'PaliGemma2-10B-pt-896'),
+        ('AI-ModelScope/paligemma2-28b-pt-224', 'PaliGemma2-28B-pt-224'),
+        ('AI-ModelScope/paligemma2-28b-pt-448', 'PaliGemma2-28B-pt-448'),
+        ('AI-ModelScope/paligemma2-28b-pt-896', 'PaliGemma2-28B-pt-896'),
+        ('mlx-community/paligemma2-3b-mix-224-bf16', 'PaliGemma2-3B-mix-224'),
+        ('mlx-community/paligemma2-3b-mix-448-bf16', 'PaliGemma2-3B-mix-448'),
+        ('mlx-community/paligemma2-10b-mix-224-bf16', 'PaliGemma2-10B-mix-224'),
+        ('mlx-community/paligemma2-10b-mix-448-bf16', 'PaliGemma2-10B-mix-448'),
+        ('mlx-community/paligemma2-28b-mix-224-bf16', 'PaliGemma2-28B-mix-224'),
+        ('mlx-community/paligemma2-28b-mix-448-bf16', 'PaliGemma2-28B-mix-448'),
+        ('AI-ModelScope/pixtral-12b', 'Pixtral-12B'),
+        ('ByteDance-Seed/Seed-Coder-8B-Base', 'Seed-Coder-8B-Base'),
+        ('ByteDance-Seed/Seed-Coder-8B-Instruct', 'Seed-Coder-8B-Instruct'),
+        ('ByteDance-Seed/Seed-Coder-8B-Reasoning-bf16', 'Seed-Coder-8B-Thinking'),
+        ('ByteDance-Seed/Seed-OSS-36B-Base', 'Seed-OSS-36B-Base'),
+        ('ByteDance-Seed/Seed-OSS-36B-Base-woSyn', 'Seed-OSS-36B-Base-woSyn'),
+        ('ByteDance-Seed/Seed-OSS-36B-Instruct', 'Seed-OSS-36B-Instruct'),
+        ('HuggingFaceTB/SmolLM-135M', 'SmolLM-135M'),
+        ('HuggingFaceTB/SmolLM-360M', 'SmolLM-360M'),
+        ('HuggingFaceTB/SmolLM-1.7B', 'SmolLM-1.7B'),
+        ('HuggingFaceTB/SmolLM-135M-Instruct', 'SmolLM-135M-Instruct'),
+        ('HuggingFaceTB/SmolLM-360M-Instruct', 'SmolLM-360M-Instruct'),
+        ('HuggingFaceTB/SmolLM-1.7B-Instruct', 'SmolLM-1.7B-Instruct'),
+        ('HuggingFaceTB/SmolLM2-135M', 'SmolLM2-135M'),
+        ('HuggingFaceTB/SmolLM2-360M', 'SmolLM2-360M'),
+        ('HuggingFaceTB/SmolLM2-1.7B', 'SmolLM2-1.7B'),
+        ('HuggingFaceTB/SmolLM2-135M-Instruct', 'SmolLM2-135M-Instruct'),
+        ('HuggingFaceTB/SmolLM2-360M-Instruct', 'SmolLM2-360M-Instruct'),
+        ('HuggingFaceTB/SmolLM2-1.7B-Instruct', 'SmolLM2-1.7B-Instruct'),
+        ('AI-ModelScope/SOLAR-10.7B-Instruct-v1.0', 'SOLAR-10.7B-Instruct-v1.0'),
+        ('AI-ModelScope/starcoder2-3b', 'StarCoder2-3B'),
+        ('AI-ModelScope/starcoder2-7b', 'StarCoder2-7B'),
+        ('AI-ModelScope/starcoder2-15b', 'StarCoder2-15B'),
+        ('TeleAI/TeleChat2-3B', 'TeleChat2-3B-Chat'),
+        ('TeleAI/TeleChat2-7B', 'TeleChat2-7B-Chat'),
+        ('TeleAI/TeleChat2-35B-Nov', 'TeleChat2.5-35B-Chat'),
+        ('TeleAI/TeleChat2-115B', 'TeleChat2-115B-Chat'),
+        ('WeiboAI/VibeThinker-1.5B', 'VibeThinker-1.5B'),
+        ('Xorbits/vicuna-7b-v1.5', 'Vicuna-v1.5-7B-Chat'),
+        ('Xorbits/vicuna-13b-v1.5', 'Vicuna-v1.5-13B-Chat'),
+        ('Duxiaoman-DI/XuanYuan-6B', 'XuanYuan-6B'),
+        ('Duxiaoman-DI/XuanYuan-70B', 'XuanYuan-70B'),
+        ('Duxiaoman-DI/XuanYuan2-70B', 'XuanYuan2-70B'),
+        ('Duxiaoman-DI/XuanYuan-6B-Chat', 'XuanYuan-6B-Chat'),
+        ('Duxiaoman-DI/XuanYuan-70B-Chat', 'XuanYuan-70B-Chat'),
+        ('Duxiaoman-DI/XuanYuan2-70B-Chat', 'XuanYuan2-70B-Chat'),
+        ('Duxiaoman-DI/XuanYuan-6B-Chat-8bit', 'XuanYuan-6B-Chat-8bit'),
+        ('Duxiaoman-DI/XuanYuan-6B-Chat-4bit', 'XuanYuan-6B-Chat-4bit'),
+        ('Duxiaoman-DI/XuanYuan-70B-Chat-8bit', 'XuanYuan-70B-Chat-8bit'),
+        ('Duxiaoman-DI/XuanYuan-70B-Chat-4bit', 'XuanYuan-70B-Chat-4bit'),
+        ('Duxiaoman-DI/XuanYuan2-70B-Chat-8bit', 'XuanYuan2-70B-Chat-8bit'),
+        ('Duxiaoman-DI/XuanYuan2-70B-Chat-4bit', 'XuanYuan2-70B-Chat-4bit'),
+        ('YuanLLM/Yuan2.0-2B-hf', 'Yuan2-2B-Chat'),
+        ('YuanLLM/Yuan2.0-51B-hf', 'Yuan2-51B-Chat'),
+        ('YuanLLM/Yuan2.0-102B-hf', 'Yuan2-102B-Chat'),
+        ('AI-ModelScope/zephyr-7b-alpha', 'Zephyr-7B-Alpha-Chat'),
+        ('modelscope/zephyr-7b-beta', 'Zephyr-7B-Beta-Chat'),
+        ('louzongktsi/Aeva-Flash', 'Aeva-Flash-Chat'),
+        ('louzongktsi/Aeva-Air', 'Aeva-Air-Chat'),
+        ('louzongktsi/Aeva', 'Aeva-Chat'),
+        ('louzongktsi/Aeva-Pro', 'Aeva-Pro-Chat'),
+        ('louzongktsi/Aeva-Max', 'Aeva-Max-Chat'),
+        ('Tencent-YouTu-Research/Youtu-LLM-2B', 'Youtu-LLM-2B-Instruct'),
+        ('Tencent-YouTu-Research/Youtu-LLM-2B-Base', 'Youtu-LLM-2B-Base'),
+        ('Tencent-YouTu-Research/Youtu-VL-4B-Instruct', 'Youtu-VL-4B-Instruct'),
+        ('CohereForAI/aya-23-8B', 'Aya-23-8B-Chat'),
+        ('CohereForAI/aya-23-35B', 'Aya-23-35B-Chat'),
+        ('MediaTek-Research/Breeze-7B-Base-v1_0', 'Breeze-7B'),
+        ('MediaTek-Research/Breeze-7B-Instruct-v1_0', 'Breeze-7B-Instruct'),
+        ('CohereForAI/c4ai-command-r-plus-4bit', 'CommandR-Plus-104B-4bit-Chat'),
+        ('LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct', 'EXAONE-3.0-7.8B-Instruct'),
+        ('LiquidAI/LFM2.5-1.2B-Base', 'LFM2.5-1.2B'),
+        ('LiquidAI/LFM2.5-1.2B-Instruct', 'LFM2.5-1.2B-Instruct'),
+        ('LiquidAI/LFM2.5-VL-1.6B', 'LFM2.5-VL-1.6B'),
+        ('allenai/OLMo-1B-hf', 'OLMo-1B'),
+        ('allenai/OLMo-7B-hf', 'OLMo-7B'),
+        ('ssec-uw/OLMo-7B-Instruct-hf', 'OLMo-7B-Chat'),
+        ('allenai/OLMo-1.7-7B-hf', 'OLMo-1.7-7B'),
+        ('openchat/openchat-3.6-8b-20240522', 'OpenChat3.6-8B-Chat'),
+        ('upstage/SOLAR-10.7B-v1.0', 'SOLAR-10.7B-v1.0'),
+        ('HuggingFaceH4/zephyr-orpo-141b-A35b-v0.1', 'Zephyr-141B-ORPO-Chat'),
+    ],
+}
+
+
+
+def get_free_space_gb(directory):
+    total, used, free = shutil.disk_usage(directory)
+    return free / (2 ** 30)
+
+
+def get_model_size_gb(model_id):
+    try:
+        api = HubApi()
+        files = api.get_model_files(model_id, recursive=True)
+        total_bytes = sum(f.get('Size', 0) for f in files)
+        return total_bytes / (2 ** 30)
+    except Exception as e:
+        print(f"无法获取模型大小：{e}")
+        return None
+
+
+def choose_number(prompt, max_num):
+    while True:
+        val = input(prompt).strip()
+        if val.isdigit() and 1 <= int(val) <= max_num:
+            return int(val)
+        print(f"请输入 1 到 {max_num} 之间的数字。")
+
+
+def get_folder_size_gb(folder):
+    total = 0
+    for dirpath, _, filenames in os.walk(folder):
+        for f in filenames:
+            try:
+                total += os.path.getsize(os.path.join(dirpath, f))
+            except OSError:
+                pass
+    return total / (2 ** 30)
+
+
+def free_space_by_deleting(needed_gb):
+    """列出已有模型让用户选择删除，直到空间足够。"""
+    while True:
+        free_gb = get_free_space_gb(DOWNLOAD_PATH)
+        if free_gb >= needed_gb:
+            return True
+
+        # 列出当前所有子文件夹
+        folders = [
+            d for d in os.listdir(DOWNLOAD_PATH)
+            if os.path.isdir(os.path.join(DOWNLOAD_PATH, d))
+        ]
+        if not folders:
+            print("目录下没有可删除的模型文件夹，无法释放空间。")
+            return False
+
+        print(f"\n空间不足，还需释放约 {needed_gb - free_gb:.1f} GB")
+        print(f"当前 {DOWNLOAD_PATH} 下已有模型：")
+        folder_sizes = []
+        for i, folder in enumerate(folders, 1):
+            size = get_folder_size_gb(os.path.join(DOWNLOAD_PATH, folder))
+            folder_sizes.append(size)
+            print(f"  {i}. {folder}（{size:.1f} GB）")
+
+        print(f"  0. 取消下载")
+        choice = input("\n请输入要删除的模型编号（可多个，用空格分隔）：").strip()
+
+        if choice == '0':
+            return False
+
+        indices = []
+        for c in choice.split():
+            if c.isdigit() and 1 <= int(c) <= len(folders):
+                indices.append(int(c) - 1)
+
+        if not indices:
+            print("输入无效，请重新选择。")
+            continue
+
+        for idx in indices:
+            folder_path = os.path.join(DOWNLOAD_PATH, folders[idx])
+            print(f"正在删除 {folders[idx]}（{folder_sizes[idx]:.1f} GB）...")
+            shutil.rmtree(folder_path)
+            print(f"已删除。")
+
+        print(f"删除完成，当前剩余空间：{get_free_space_gb(DOWNLOAD_PATH):.1f} GB")
+
+
+if not os.path.exists(DOWNLOAD_PATH):
+    os.makedirs(DOWNLOAD_PATH)
+
+categories = list(MODELS.keys())
+
+while True:
+    # 第一级：选系列
+    print("=" * 50)
+    print("请选择模型系列：")
+    for i, cat in enumerate(categories, 1):
+        print(f"  {i}. {cat}（{len(MODELS[cat])} 个模型）")
+
+    cat_idx = choose_number("\n请输入系列编号：", len(categories))
+    selected_category = categories[cat_idx - 1]
+    model_list = MODELS[selected_category]
+
+    # 第二级：选具体模型
+    print("\n" + "=" * 50)
+    print(f"【{selected_category}】请选择模型：")
+    for i, (mid, mname) in enumerate(model_list, 1):
+        print(f"  {i}. {mname}")
+
+    model_idx = choose_number("\n请输入模型编号：", len(model_list))
+    MODEL_ID, model_name = model_list[model_idx - 1]
+
+    print(f"\n你选择的模型是：{model_name}")
+    confirm = input("确认下载吗？(y/n)：").strip().lower()
+    if confirm == 'y':
+        break
+    print("\n已取消，请重新选择。\n")
+
+local_dir = os.path.join(DOWNLOAD_PATH, model_name)
+
+# 检查空间
+free_gb = get_free_space_gb(DOWNLOAD_PATH)
+model_gb = get_model_size_gb(MODEL_ID)
+
+print(f"\n当前 {DOWNLOAD_PATH} 剩余空间：{free_gb:.1f} GB")
+if model_gb is not None:
+    print(f"模型 {MODEL_ID} 大小：{model_gb:.1f} GB")
+    if free_gb < model_gb:
+        print(f"空间不足！需要 {model_gb:.1f} GB，当前只有 {free_gb:.1f} GB")
+        if not free_space_by_deleting(model_gb):
+            print("空间不足，已取消下载。")
+            exit(1)
+    print("空间充足，开始下载...")
+else:
+    print("无法确认模型大小，继续下载...")
+
+model_dir = snapshot_download(MODEL_ID, local_dir=local_dir)
+
+print("下载完毕！！！！")
+print(f"模型保存路径：{model_dir}")
+print("可以使用这个模型推理或者训练了！！！！")

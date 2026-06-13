@@ -1,0 +1,5 @@
+
+
+下载各种模型：
+
+python /root/LLaMA-Factory/模型贩卖机.py
