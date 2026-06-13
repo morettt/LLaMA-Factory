@@ -176,6 +176,22 @@ def _delete_model(download_path: str, model_name: str | None) -> tuple:
     return rows, gr.Dropdown(choices=[r[0] for r in rows], value=None), f"✅ 已删除：{model_name}"
 
 
+_distil_stop = threading.Event()
+
+
+def _stop_distil() -> str:
+    _distil_stop.set()
+    return "⏹ 已发送停止信号，等待当前批次完成..."
+
+
+def _read_output(output_file: str) -> str:
+    try:
+        with open(output_file, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception:
+        return ""
+
+
 def _run_distil(
     api_key: str,
     api_base: str,
@@ -185,12 +201,14 @@ def _run_distil(
     input_file: str,
     output_file: str,
     workers: int,
-) -> Generator[str, None, None]:
+) -> Generator[tuple, None, None]:
+    _distil_stop.clear()
+
     if not api_key.strip():
-        yield "请填写 API Key。"
+        yield "请填写 API Key。", ""
         return
     if not os.path.exists(input_file):
-        yield f"输入文件不存在：{input_file}"
+        yield f"输入文件不存在：{input_file}", ""
         return
 
     from openai import OpenAI
@@ -201,10 +219,12 @@ def _run_distil(
 
     total = len(lines)
     if total == 0:
-        yield "输入文件中没有找到「问：」格式的内容。"
+        yield "输入文件中没有找到「问：」格式的内容。", ""
         return
 
     os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
+    open(output_file, "w", encoding="utf-8").close()
+
     write_lock = threading.Lock()
     counter = {"done": 0, "success": 0, "fail": 0}
 
@@ -225,13 +245,19 @@ def _run_distil(
         return (resp.choices[0].message.content or "").strip().replace("\n", " ")
 
     def process_line(line):
+        if _distil_stop.is_set():
+            counter["done"] += 1
+            return
         ask_content = line.split("问：")[1].strip()
         if not ask_content:
+            counter["done"] += 1
             return
         try:
             history = [{"role": "user", "content": ask_content}]
             parts = [f"问：{ask_content}\n"]
             for turn in range(turns):
+                if _distil_stop.is_set():
+                    return
                 ai_resp = generate_ai_response(history)
                 if not ai_resp:
                     return
@@ -253,9 +279,6 @@ def _run_distil(
         finally:
             counter["done"] += 1
 
-    # 清空输出文件
-    open(output_file, "w", encoding="utf-8").close()
-
     result = {"done": False}
 
     def _run():
@@ -265,14 +288,20 @@ def _run_distil(
 
     threading.Thread(target=_run, daemon=True).start()
 
-    yield f"开始蒸馏，共 {total} 条，并发 {workers} 线程...\n"
+    yield f"开始蒸馏，共 {total} 条，并发 {workers} 线程...\n", ""
     while not result["done"]:
         pct = counter["done"] / total * 100
         bar = "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
-        yield f"[{bar}] {pct:.1f}%\n已处理：{counter['done']}/{total}  成功：{counter['success']}  失败：{counter['fail']}"
+        status = f"[{bar}] {pct:.1f}%\n已处理：{counter['done']}/{total}  成功：{counter['success']}  失败：{counter['fail']}"
+        if _distil_stop.is_set():
+            status += "\n⏹ 停止中..."
+        yield status, _read_output(output_file)
         time.sleep(2)
 
-    yield f"✅ 蒸馏完成！\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
+    final_status = f"✅ 蒸馏完成！\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
+    if _distil_stop.is_set():
+        final_status = f"⏹ 已停止。\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
+    yield final_status, _read_output(output_file)
 
 
 def create_distil_tab() -> dict[str, "Component"]:
@@ -297,14 +326,19 @@ def create_distil_tab() -> dict[str, "Component"]:
         input_file = gr.Textbox(label="输入文件路径", value="/root/LLaMA-Factory/数据集蒸馏房/data/ordinary.txt", scale=3)
         output_file = gr.Textbox(label="输出文件路径", value="/root/LLaMA-Factory/数据集蒸馏房/data/output.txt", scale=3)
 
-    start_btn = gr.Button("开始蒸馏", variant="primary")
-    distil_status = gr.Textbox(label="状态", interactive=False, lines=6)
+    with gr.Row():
+        start_btn = gr.Button("开始蒸馏", variant="primary", scale=3)
+        stop_btn = gr.Button("停止", variant="stop", scale=1)
+
+    distil_status = gr.Textbox(label="进度", interactive=False, lines=4)
+    distil_output = gr.Textbox(label="蒸馏输出", interactive=False, lines=15, max_lines=200)
 
     start_btn.click(
         fn=_run_distil,
         inputs=[api_key, api_base, model, system_prompt, turns, input_file, output_file, workers],
-        outputs=distil_status,
+        outputs=[distil_status, distil_output],
     )
+    stop_btn.click(fn=_stop_distil, outputs=distil_status)
 
     return dict(
         distil_api_key=api_key,
@@ -316,6 +350,7 @@ def create_distil_tab() -> dict[str, "Component"]:
         distil_input_file=input_file,
         distil_output_file=output_file,
         distil_status=distil_status,
+        distil_output=distil_output,
     )
 
 
