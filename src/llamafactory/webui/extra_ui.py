@@ -217,12 +217,33 @@ def _stop_distil() -> str:
     return "⏹ 已发送停止信号，等待当前批次完成..."
 
 
+_LINES_PER_PAGE = 30
+
+
 def _read_output(output_file: str) -> str:
     try:
         with open(output_file, "r", encoding="utf-8") as f:
             return f.read()
     except Exception:
         return ""
+
+
+def _get_page(output_file: str, page_idx: int) -> tuple:
+    content = _read_output(output_file)
+    lines = content.split("\n") if content else []
+    total_pages = max(1, (len(lines) + _LINES_PER_PAGE - 1) // _LINES_PER_PAGE)
+    page_idx = max(0, min(page_idx, total_pages - 1))
+    start = page_idx * _LINES_PER_PAGE
+    page_content = "\n".join(lines[start:start + _LINES_PER_PAGE])
+    return page_content, f"第 {page_idx + 1} 页 / 共 {total_pages} 页", page_idx
+
+
+def _prev_page(output_file: str, page_idx: int) -> tuple:
+    return _get_page(output_file, page_idx - 1)
+
+
+def _next_page(output_file: str, page_idx: int) -> tuple:
+    return _get_page(output_file, page_idx + 1)
 
 
 def _run_distil(
@@ -238,10 +259,10 @@ def _run_distil(
     _distil_stop.clear()
 
     if not api_key.strip():
-        yield "请填写 API Key。", ""
+        yield "请填写 API Key。", "", "第 1 页 / 共 1 页", 0
         return
     if not os.path.exists(input_file):
-        yield f"输入文件不存在：{input_file}", ""
+        yield f"输入文件不存在：{input_file}", "", "第 1 页 / 共 1 页", 0
         return
 
     from openai import OpenAI
@@ -252,7 +273,7 @@ def _run_distil(
 
     total = len(lines)
     if total == 0:
-        yield "输入文件中没有找到「问：」格式的内容。", ""
+        yield "输入文件中没有找到「问：」格式的内容。", "", "第 1 页 / 共 1 页", 0
         return
 
     os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
@@ -321,20 +342,22 @@ def _run_distil(
 
     threading.Thread(target=_run, daemon=True).start()
 
-    yield f"开始蒸馏，共 {total} 条，并发 {workers} 线程...\n", ""
+    yield f"开始蒸馏，共 {total} 条，并发 {workers} 线程...\n", "", "第 1 页 / 共 1 页", 0
     while not result["done"]:
         pct = counter["done"] / total * 100
         bar = "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
         status = f"[{bar}] {pct:.1f}%\n已处理：{counter['done']}/{total}  成功：{counter['success']}  失败：{counter['fail']}"
         if _distil_stop.is_set():
             status += "\n⏹ 停止中..."
-        yield status, _read_output(output_file)
+        page_content, page_info, page_idx = _get_page(output_file, 9999)
+        yield status, page_content, page_info, page_idx
         time.sleep(2)
 
     final_status = f"✅ 蒸馏完成！\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
     if _distil_stop.is_set():
         final_status = f"⏹ 已停止。\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
-    yield final_status, _read_output(output_file)
+    page_content, page_info, page_idx = _get_page(output_file, 9999)
+    yield final_status, page_content, page_info, page_idx
 
 
 def create_distil_tab() -> dict[str, "Component"]:
@@ -367,14 +390,23 @@ def create_distil_tab() -> dict[str, "Component"]:
         stop_btn = gr.Button("停止", variant="stop", scale=1)
 
     distil_status = gr.Textbox(label="进度", interactive=False, lines=4)
-    distil_output = gr.Textbox(label="蒸馏输出", interactive=False, lines=15, max_lines=200)
+    distil_output = gr.Textbox(label="蒸馏输出", interactive=False, lines=15)
+
+    with gr.Row():
+        prev_btn = gr.Button("上一页", scale=1)
+        page_info = gr.Textbox(value="第 1 页 / 共 1 页", interactive=False, show_label=False, scale=2)
+        next_btn = gr.Button("下一页", scale=1)
+
+    page_state = gr.State(value=0)
 
     start_btn.click(
         fn=_run_distil,
         inputs=[api_key, api_base, model, system_prompt, turns, input_file, output_file, workers],
-        outputs=[distil_status, distil_output],
+        outputs=[distil_status, distil_output, page_info, page_state],
     )
     stop_btn.click(fn=_stop_distil, outputs=distil_status)
+    prev_btn.click(fn=_prev_page, inputs=[output_file, page_state], outputs=[distil_output, page_info, page_state])
+    next_btn.click(fn=_next_page, inputs=[output_file, page_state], outputs=[distil_output, page_info, page_state])
 
     # 拉取模型列表 + 保存配置
     api_key.change(fn=_fetch_models, inputs=[api_key, api_base], outputs=model)
@@ -393,6 +425,7 @@ def create_distil_tab() -> dict[str, "Component"]:
         distil_output_file=output_file,
         distil_status=distil_status,
         distil_output=distil_output,
+        distil_page_info=page_info,
     )
 
 
