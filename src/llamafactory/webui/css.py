@@ -64,4 +64,27 @@ CSS = r"""
 .dark .modal-box {
   border: 2px solid white !important;
 }
+
+.tools-fab {
+  position: fixed !important;
+  top: 28px !important;
+  right: 28px !important;
+  z-index: 9999 !important;
+  background: #f97316 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 50px !important;
+  padding: 12px 22px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25) !important;
+  text-decoration: none !important;
+  transition: background 0.2s, transform 0.15s !important;
+}
+
+.tools-fab:hover {
+  background: #ea6c0a !important;
+  transform: translateY(-2px) !important;
+}
 """
