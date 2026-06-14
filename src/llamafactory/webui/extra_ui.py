@@ -210,6 +210,7 @@ def _fetch_models(api_key: str, api_base: str) -> "gr.Dropdown":
 
 
 _distil_stop = threading.Event()
+_user_navigated = False
 
 
 def _stop_distil() -> str:
@@ -239,10 +240,14 @@ def _get_page(output_file: str, page_idx: int) -> tuple:
 
 
 def _prev_page(output_file: str, page_idx: int) -> tuple:
+    global _user_navigated
+    _user_navigated = True
     return _get_page(output_file, page_idx - 1)
 
 
 def _next_page(output_file: str, page_idx: int) -> tuple:
+    global _user_navigated
+    _user_navigated = True
     return _get_page(output_file, page_idx + 1)
 
 
@@ -256,7 +261,9 @@ def _run_distil(
     output_file: str,
     workers: int,
 ) -> Generator[tuple, None, None]:
+    global _user_navigated
     _distil_stop.clear()
+    _user_navigated = False
 
     if not api_key.strip():
         yield "请填写 API Key。", "", "第 1 页 / 共 1 页", 0
@@ -349,8 +356,11 @@ def _run_distil(
         status = f"[{bar}] {pct:.1f}%\n已处理：{counter['done']}/{total}  成功：{counter['success']}  失败：{counter['fail']}"
         if _distil_stop.is_set():
             status += "\n⏹ 停止中..."
-        page_content, page_info_val, page_idx = _get_page(output_file, 9999)
-        yield status, page_content, page_info_val, page_idx, gr.update(visible=False)
+        if not _user_navigated:
+            page_content, page_info_val, page_idx = _get_page(output_file, 9999)
+            yield status, page_content, page_info_val, page_idx, gr.update(visible=False)
+        else:
+            yield status, gr.update(), gr.update(), gr.update(), gr.update(visible=False)
         time.sleep(2)
 
     final_status = f"✅ 蒸馏完成！\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
