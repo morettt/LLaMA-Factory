@@ -280,6 +280,8 @@ MODELS = {
         ('LLM-Research/gemma-3-4b-it', 'Gemma-3-4B-Instruct'),
         ('LLM-Research/gemma-3-12b-it', 'Gemma-3-12B-Instruct'),
         ('LLM-Research/gemma-3-27b-it', 'Gemma-3-27B-Instruct'),
+        ('LLM-Research/gemma-4-12b-it', 'Gemma-4-12B-Instruct'),
+        ('LLM-Research/gemma-4-31b-it', 'Gemma-4-31B-Instruct'),
     ],
     'Mistral / Mixtral 系列': [
         ('LLM-Research/mistral-7b-v0.3', 'Mistral-7B-v0.3'),
