@@ -1,0 +1,14 @@
+{
+  "模": {
+    "inference": true,
+    "training": true
+  },
+  "推": {
+    "inference": true,
+    "training": true
+  },
+  "训": {
+    "inference": true,
+    "training": true
+  }
+}

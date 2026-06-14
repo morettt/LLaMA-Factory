@@ -728,7 +728,7 @@ def _load_records() -> dict:
         return {}
 
 
-def _save_records(data: list) -> None:
+def _save_records(data: list) -> str:
     records = _load_records()
     for row in data:
         if row and len(row) >= 6:
@@ -743,6 +743,7 @@ def _save_records(data: list) -> None:
     os.makedirs("llamaboard_cache", exist_ok=True)
     with open(_RECORDS_FILE, "w", encoding="utf-8") as f:
         json.dump(records, f, ensure_ascii=False, indent=2)
+    return "✅ 已保存"
 
 
 def _build_records_data(series: str) -> list:
@@ -754,13 +755,22 @@ def _build_records_data(series: str) -> list:
     return rows
 
 
+def _switch_series_and_save(series: str, current_data) -> tuple:
+    if current_data is not None:
+        rows = current_data if isinstance(current_data, list) else current_data.values.tolist()
+        _save_records(rows)
+    return _build_records_data(series), ""
+
+
 def create_record_tab() -> dict[str, "Component"]:
     gr.Markdown("## 模型测试记录")
 
     series_choices = list(MODELS.keys())
     first_series = series_choices[0]
 
-    series_dd = gr.Dropdown(choices=series_choices, value=first_series, label="模型系列")
+    with gr.Row():
+        series_dd = gr.Dropdown(choices=series_choices, value=first_series, label="模型系列", scale=4)
+        save_btn = gr.Button("保存记录", variant="primary", scale=1)
 
     table = gr.Dataframe(
         value=_build_records_data(first_series),
@@ -770,7 +780,9 @@ def create_record_tab() -> dict[str, "Component"]:
         wrap=True,
     )
 
-    series_dd.change(fn=_build_records_data, inputs=series_dd, outputs=table)
-    table.change(fn=_save_records, inputs=table, outputs=gr.State())
+    save_status = gr.Textbox(label="状态", interactive=False, lines=1)
 
-    return dict(record_series=series_dd, record_table=table)
+    series_dd.change(fn=_switch_series_and_save, inputs=[series_dd, table], outputs=[table, save_status])
+    save_btn.click(fn=_save_records, inputs=table, outputs=save_status)
+
+    return dict(record_series=series_dd, record_table=table, record_save_status=save_status)
