@@ -342,33 +342,44 @@ def _run_distil(
 
     threading.Thread(target=_run, daemon=True).start()
 
-    yield f"开始蒸馏，共 {total} 条，并发 {workers} 线程...\n", "", "第 1 页 / 共 1 页", 0
+    yield f"开始蒸馏，共 {total} 条，并发 {workers} 线程...\n", gr.update(), gr.update(), gr.update(), gr.update(visible=False)
     while not result["done"]:
         pct = counter["done"] / total * 100
         bar = "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
         status = f"[{bar}] {pct:.1f}%\n已处理：{counter['done']}/{total}  成功：{counter['success']}  失败：{counter['fail']}"
         if _distil_stop.is_set():
             status += "\n⏹ 停止中..."
-        page_content, page_info, page_idx = _get_page(output_file, 9999)
-        yield status, page_content, page_info, page_idx
+        yield status, gr.update(), gr.update(), gr.update(), gr.update(visible=False)
         time.sleep(2)
 
     final_status = f"✅ 蒸馏完成！\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
     if _distil_stop.is_set():
         final_status = f"⏹ 已停止。\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
     page_content, page_info, page_idx = _get_page(output_file, 9999)
-    yield final_status, page_content, page_info, page_idx
+    yield final_status, page_content, page_info, page_idx, gr.update(visible=True)
 
 
 def create_distil_tab() -> dict[str, "Component"]:
     cfg = _load_distil_config()
 
+    saved_key = cfg.get("api_key", "")
+    saved_base = cfg.get("api_base", "")
+    saved_model = cfg.get("model", None)
+    initial_choices = []
+    if saved_key and saved_base:
+        try:
+            from openai import OpenAI
+            _c = OpenAI(api_key=saved_key, base_url=saved_base)
+            initial_choices = sorted([m.id for m in _c.models.list()])
+        except Exception:
+            pass
+
     gr.Markdown("## 数据集蒸馏")
 
     with gr.Row():
-        api_key = gr.Textbox(label="API Key", value=cfg.get("api_key", ""), placeholder="sk-...", scale=2)
-        api_base = gr.Textbox(label="API Base", value=cfg.get("api_base", ""), placeholder="https://...", scale=2)
-        model = gr.Dropdown(label="模型", choices=[], value=None, allow_custom_value=True, scale=1)
+        api_key = gr.Textbox(label="API Key", value=saved_key, placeholder="sk-...", scale=2)
+        api_base = gr.Textbox(label="API Base", value=saved_base, placeholder="https://...", scale=2)
+        model = gr.Dropdown(label="模型", choices=initial_choices, value=saved_model if saved_model in initial_choices else None, allow_custom_value=True, scale=1)
 
     system_prompt = gr.Textbox(
         label="System Prompt",
@@ -394,19 +405,30 @@ def create_distil_tab() -> dict[str, "Component"]:
 
     with gr.Row():
         prev_btn = gr.Button("上一页", scale=1)
-        page_info = gr.Textbox(value="第 1 页 / 共 1 页", interactive=False, show_label=False, scale=2)
         next_btn = gr.Button("下一页", scale=1)
+        page_info = gr.Textbox(value="第 1 页 / 共 1 页", interactive=False, show_label=False, scale=2)
+
+    with gr.Row():
+        download_btn = gr.Button("下载数据集", variant="secondary", scale=1, visible=False)
+        download_file = gr.File(label="点击下载", interactive=False, visible=False, scale=3)
 
     page_state = gr.State(value=0)
 
     start_btn.click(
         fn=_run_distil,
         inputs=[api_key, api_base, model, system_prompt, turns, input_file, output_file, workers],
-        outputs=[distil_status, distil_output, page_info, page_state],
+        outputs=[distil_status, distil_output, page_info, page_state, download_btn],
     )
     stop_btn.click(fn=_stop_distil, outputs=distil_status)
     prev_btn.click(fn=_prev_page, inputs=[output_file, page_state], outputs=[distil_output, page_info, page_state])
     next_btn.click(fn=_next_page, inputs=[output_file, page_state], outputs=[distil_output, page_info, page_state])
+
+    def _prepare_download(path: str):
+        if os.path.exists(path):
+            return gr.File(value=path, visible=True)
+        return gr.File(value=None, visible=False)
+
+    download_btn.click(fn=_prepare_download, inputs=output_file, outputs=download_file)
 
     # 拉取模型列表 + 保存配置
     api_key.change(fn=_fetch_models, inputs=[api_key, api_base], outputs=model)
