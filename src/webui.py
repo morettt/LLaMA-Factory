@@ -26,7 +26,7 @@ def main():
 
     fix_proxy(ipv6_enabled=gradio_ipv6)
     print(f"Visit http://127.0.0.1:{server_port}")
-    create_ui().queue().launch(share=gradio_share, server_name=server_name, server_port=server_port)
+    create_ui().queue().launch(share=gradio_share, server_name=server_name, server_port=server_port, allowed_paths=["/root/LLaMA-Factory"])
 
 
 if __name__ == "__main__":
