@@ -755,19 +755,13 @@ def _build_records_data(series: str) -> list:
     return rows
 
 
-def _switch_series(series: str) -> list:
-    return _build_records_data(series)
-
-
 def create_record_tab() -> dict[str, "Component"]:
     gr.Markdown("## 模型测试记录")
 
     series_choices = list(MODELS.keys())
     first_series = series_choices[0]
 
-    with gr.Row():
-        series_dd = gr.Dropdown(choices=series_choices, value=first_series, label="模型系列", scale=4)
-        save_btn = gr.Button("保存记录", variant="primary", scale=1)
+    series_dd = gr.Dropdown(choices=series_choices, value=first_series, label="模型系列")
 
     table = gr.Dataframe(
         value=_build_records_data(first_series),
@@ -777,9 +771,7 @@ def create_record_tab() -> dict[str, "Component"]:
         wrap=True,
     )
 
-    save_status = gr.Textbox(label="状态", interactive=False, lines=1)
+    series_dd.change(fn=_build_records_data, inputs=series_dd, outputs=table)
+    table.change(fn=_save_records, inputs=table)
 
-    series_dd.change(fn=_switch_series, inputs=series_dd, outputs=table)
-    save_btn.click(fn=_save_records, inputs=table, outputs=save_status)
-
-    return dict(record_series=series_dd, record_table=table, record_save_status=save_status)
+    return dict(record_series=series_dd, record_table=table)
