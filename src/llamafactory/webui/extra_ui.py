@@ -596,15 +596,11 @@ def create_process_tab() -> dict[str, "Component"]:
         input_path = gr.Textbox(label="输入文件路径", value=_DEFAULT_DATASET_INPUT, scale=3)
         output_path = gr.Textbox(label="输出文件路径", value=_DEFAULT_DATASET_OUTPUT, scale=3)
 
-    dataset_text = gr.Textbox(label="数据集内容", lines=20, placeholder="在此粘贴或编辑数据集...")
+    dataset_text = gr.Textbox(label="数据集内容", value=_load_dataset_text(_DEFAULT_DATASET_INPUT), lines=20, placeholder="在此粘贴或编辑数据集...")
 
-    with gr.Row():
-        load_btn = gr.Button("加载文件内容", scale=1)
-        process_btn = gr.Button("保存并处理", variant="primary", scale=1)
-
+    process_btn = gr.Button("保存并处理", variant="primary")
     process_status = gr.Textbox(label="处理结果", interactive=False, lines=2)
 
-    load_btn.click(fn=_load_dataset_text, inputs=input_path, outputs=dataset_text)
     process_btn.click(fn=_process_dataset, inputs=[dataset_text, input_path, output_path], outputs=process_status)
 
     return dict(
