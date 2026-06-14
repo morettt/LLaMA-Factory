@@ -779,4 +779,7 @@ def create_record_tab() -> dict[str, "Component"]:
     series_dd.change(fn=_switch_series, inputs=[series_dd, table], outputs=table)
     table.input(fn=_save_records, inputs=table)
 
+    timer = gr.Timer(value=3)
+    timer.tick(fn=_save_records, inputs=table)
+
     return dict(record_series=series_dd, record_table=table)
