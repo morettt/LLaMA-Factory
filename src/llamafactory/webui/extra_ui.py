@@ -717,7 +717,7 @@ def create_process_tab() -> dict[str, "Component"]:
     )
 
 
-_RECORDS_FILE = os.path.join("llamaboard_cache", "model_records.json")
+_RECORDS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_records.json")
 
 
 def _load_records() -> dict:
@@ -728,10 +728,11 @@ def _load_records() -> dict:
         return {}
 
 
-def _save_records(data: list) -> str:
+def _save_records(data) -> None:
+    rows = data if isinstance(data, list) else data.values.tolist()
     records = _load_records()
-    for row in data:
-        if row and len(row) >= 6:
+    for row in rows:
+        if row and len(row) >= 6 and row[0]:
             name = row[0]
             records[name] = {
                 "inference": bool(row[1]),
@@ -740,10 +741,8 @@ def _save_records(data: list) -> str:
                 "kto": bool(row[4]),
                 "pt": bool(row[5]),
             }
-    os.makedirs("llamaboard_cache", exist_ok=True)
     with open(_RECORDS_FILE, "w", encoding="utf-8") as f:
         json.dump(records, f, ensure_ascii=False, indent=2)
-    return "✅ 已保存"
 
 
 def _build_records_data(series: str) -> list:
@@ -755,20 +754,10 @@ def _build_records_data(series: str) -> list:
     return rows
 
 
-def _switch_series(series: str, current_data, is_switching: bool) -> tuple:
+def _switch_series(series: str, current_data) -> list:
     if current_data is not None:
-        rows = current_data if isinstance(current_data, list) else current_data.values.tolist()
-        _save_records(rows)
-    return _build_records_data(series), True
-
-
-def _auto_save(data, is_switching: bool) -> bool:
-    if is_switching:
-        return False
-    if data is not None:
-        rows = data if isinstance(data, list) else data.values.tolist()
-        _save_records(rows)
-    return False
+        _save_records(current_data)
+    return _build_records_data(series)
 
 
 def create_record_tab() -> dict[str, "Component"]:
@@ -778,7 +767,6 @@ def create_record_tab() -> dict[str, "Component"]:
     first_series = series_choices[0]
 
     series_dd = gr.Dropdown(choices=series_choices, value=first_series, label="模型系列")
-    switching_flag = gr.State(value=False)
 
     table = gr.Dataframe(
         value=_build_records_data(first_series),
@@ -788,7 +776,7 @@ def create_record_tab() -> dict[str, "Component"]:
         wrap=True,
     )
 
-    series_dd.change(fn=_switch_series, inputs=[series_dd, table, switching_flag], outputs=[table, switching_flag])
-    table.change(fn=_auto_save, inputs=[table, switching_flag], outputs=switching_flag)
+    series_dd.change(fn=_switch_series, inputs=[series_dd, table], outputs=table)
+    table.input(fn=_save_records, inputs=table)
 
     return dict(record_series=series_dd, record_table=table)
