@@ -15,6 +15,7 @@
 import concurrent.futures
 import json
 import os
+import re
 import shutil
 import threading
 import time
@@ -503,4 +504,108 @@ def create_extra_tab() -> dict[str, "Component"]:
         extra_model_table=model_table,
         extra_delete_dd=delete_dd,
         extra_delete_status=delete_status,
+    )
+
+
+_DEFAULT_DATASET_INPUT = "/root/LLaMA-Factory/数据集全自动处理/放置数据集.txt"
+_DEFAULT_DATASET_OUTPUT = "/root/LLaMA-Factory/data/train.json"
+_DEFAULT_DATASET_MID = "/root/LLaMA-Factory/chuli/多轮对话处理合并.txt"
+
+
+def _process_dataset(text: str, input_path: str, output_path: str) -> str:
+    try:
+        os.makedirs(os.path.dirname(os.path.abspath(input_path)), exist_ok=True)
+        with open(input_path, "w", encoding="utf-8") as f:
+            f.write(text)
+
+        # 优化格式：合并连续同角色台词
+        lines = text.splitlines()
+        merged = []
+        prev_speaker = None
+        merged_line = ""
+        for line in lines:
+            match = re.match(r"^(问|答|提示|指令)[：:](.+)$", line.strip())
+            if match:
+                speaker, content = match.groups()
+                if speaker == prev_speaker:
+                    merged_line += "。" + content
+                else:
+                    if merged_line:
+                        merged.append(f"{prev_speaker}：{merged_line}")
+                    prev_speaker = speaker
+                    merged_line = content
+            else:
+                if merged_line:
+                    merged.append(f"{prev_speaker}：{merged_line}")
+                merged.append(line.strip())
+                prev_speaker = None
+                merged_line = ""
+        if merged_line:
+            merged.append(f"{prev_speaker}：{merged_line}")
+
+        # 成品输出：转换为 train.json
+        content = "\n".join(merged)
+        dialogues = content.strip().split("\n\n")
+        parsed = []
+        for dialogue in dialogues:
+            valid = [l for l in dialogue.split("\n") if "：" in l]
+            if not valid:
+                continue
+            if valid[0].startswith("指令："):
+                instruction = valid[0].split("：", 1)[1]
+                if len(valid) < 3:
+                    continue
+                input_text = valid[1].split("：", 1)[1]
+                output = valid[2].split("：", 1)[1]
+                history = []
+                for i in range(3, len(valid) - 1, 2):
+                    if i + 1 < len(valid):
+                        history.append([valid[i].split("：", 1)[1], valid[i + 1].split("：", 1)[1]])
+                parsed.append({"instruction": instruction, "input": input_text, "output": output, "system": "", "history": history})
+            else:
+                first_speaker, first_sentence = valid[0].split("：", 1)
+                if first_speaker != "问":
+                    continue
+                output = valid[1].split("：", 1)[1] if len(valid) > 1 else ""
+                history = []
+                for i in range(2, len(valid) - 1, 2):
+                    history.append([valid[i].split("：")[1], valid[i + 1].split("：")[1]])
+                parsed.append({"instruction": first_sentence, "input": "", "output": output, "system": "", "history": history})
+
+        os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(parsed, f, ensure_ascii=False, indent=2)
+
+        return f"✅ 处理完成！共生成 {len(parsed)} 条数据\n输出文件：{output_path}"
+    except Exception as e:
+        return f"❌ 处理失败：{e}"
+
+
+def _load_dataset_text(input_path: str) -> str:
+    try:
+        with open(input_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception:
+        return ""
+
+
+def create_process_tab() -> dict[str, "Component"]:
+    gr.Markdown("## 数据集处理")
+
+    with gr.Row():
+        input_path = gr.Textbox(label="输入文件路径", value=_DEFAULT_DATASET_INPUT, scale=3)
+        output_path = gr.Textbox(label="输出文件路径", value=_DEFAULT_DATASET_OUTPUT, scale=3)
+
+    dataset_text = gr.Textbox(label="数据集内容", value=_load_dataset_text(_DEFAULT_DATASET_INPUT), lines=20, placeholder="在此粘贴或编辑数据集...")
+
+    process_btn = gr.Button("保存并处理", variant="primary")
+    process_status = gr.Textbox(label="处理结果", interactive=False, lines=2)
+
+    process_btn.click(fn=_process_dataset, inputs=[dataset_text, input_path, output_path], outputs=process_status)
+
+    return dict(
+        process_input_path=input_path,
+        process_output_path=output_path,
+        process_text=dataset_text,
+        process_status=process_status,
     )
