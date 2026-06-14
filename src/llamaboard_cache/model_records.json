@@ -1363,5 +1363,600 @@
     "dpo": false,
     "kto": false,
     "pt": false
+  },
+  "ChatGLM3-6B-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "ChatGLM3-6B-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4-9B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4-9B-Chat": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4-9B-1M-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4-0414-9B-Chat": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4-0414-32B-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4-0414-32B-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.1V-9B-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.1V-9B-Thinking": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.5-Air-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.5-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.5-Air-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.5-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.5V-Air-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.6V": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.6V-Flash": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.7-Flash": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-OCR": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-Z1-0414-9B-Chat": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-Z1-0414-32B-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-7B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-13B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-30B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-65B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-2-7B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-2-13B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-2-70B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-2-7B-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-2-13B-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-2-70B-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-3-8B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-3-70B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-3-8B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-3-70B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-3-8B-Chinese-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-3.1-8B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-3.1-70B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-3.1-405B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-3.1-8B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-3.1-70B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-3.1-405B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-3.2-1B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-3.2-3B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-3.2-1B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-3.2-3B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-3.3-70B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-4-Scout-17B-16E-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Llama-4-Maverick-17B-128E-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-2-2B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-2-9B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-2-27B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-2-2B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-2-9B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-2-27B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-3-1B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-3-4B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-3-12B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-3-27B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-3-1B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-3-4B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-3-12B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-3-27B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-4-E2B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-4-E4B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-4-26B-A4B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-4-31B-Thinking": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Kimi-Dev-72B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Kimi-VL-A3B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Kimi-VL-A3B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Moonlight-16B-A3B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "SmolLM2-135M-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "SmolLM2-360M-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "SmolLM2-1.7B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "OpenCoder-1.5B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "OpenCoder-8B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Seed-Coder-8B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "EXAONE-3.0-7.8B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "ERNIE-4.5-0.3B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "ERNIE-4.5-21B-A3B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "dots.ocr": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Phi-3.5-4B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Phi-3.5-MoE-42B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Phi-4-14B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Phi-4-3.8B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
   }
 }
