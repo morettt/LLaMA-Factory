@@ -715,3 +715,62 @@ def create_process_tab() -> dict[str, "Component"]:
         process_text=dataset_text,
         process_status=process_status,
     )
+
+
+_RECORDS_FILE = os.path.join("llamaboard_cache", "model_records.json")
+
+
+def _load_records() -> dict:
+    try:
+        with open(_RECORDS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _save_records(data: list) -> None:
+    records = _load_records()
+    for row in data:
+        if row and len(row) >= 6:
+            name = row[0]
+            records[name] = {
+                "inference": bool(row[1]),
+                "sft": bool(row[2]),
+                "dpo": bool(row[3]),
+                "kto": bool(row[4]),
+                "pt": bool(row[5]),
+            }
+    os.makedirs("llamaboard_cache", exist_ok=True)
+    with open(_RECORDS_FILE, "w", encoding="utf-8") as f:
+        json.dump(records, f, ensure_ascii=False, indent=2)
+
+
+def _build_records_data(series: str) -> list:
+    records = _load_records()
+    rows = []
+    for _, name in MODELS.get(series, []):
+        r = records.get(name, {})
+        rows.append([name, r.get("inference", False), r.get("sft", False), r.get("dpo", False), r.get("kto", False), r.get("pt", False)])
+    return rows
+
+
+def create_record_tab() -> dict[str, "Component"]:
+    gr.Markdown("## 模型测试记录")
+
+    series_choices = list(MODELS.keys())
+    first_series = series_choices[0]
+
+    series_dd = gr.Dropdown(choices=series_choices, value=first_series, label="模型系列")
+
+    table = gr.Dataframe(
+        value=_build_records_data(first_series),
+        headers=["模型名称", "推理成功", "SFT训练", "DPO训练", "KTO训练", "PT训练"],
+        datatype=["str", "bool", "bool", "bool", "bool", "bool"],
+        interactive=True,
+        wrap=True,
+    )
+
+    series_dd.change(fn=_build_records_data, inputs=series_dd, outputs=table)
+    table.change(fn=_save_records, inputs=table, outputs=gr.State())
+
+    return dict(record_series=series_dd, record_table=table)
