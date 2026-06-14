@@ -732,14 +732,15 @@ def _save_records(data) -> str:
     rows = data if isinstance(data, list) else data.values.tolist()
     records = _load_records()
     for row in rows:
-        if row and len(row) >= 6 and row[0]:
+        if row and len(row) >= 7 and row[0]:
             name = row[0]
             records[name] = {
                 "inference": bool(row[1]),
-                "sft": bool(row[2]),
-                "dpo": bool(row[3]),
-                "kto": bool(row[4]),
-                "pt": bool(row[5]),
+                "inference_fail": bool(row[2]),
+                "sft": bool(row[3]),
+                "dpo": bool(row[4]),
+                "kto": bool(row[5]),
+                "pt": bool(row[6]),
             }
     with open(_RECORDS_FILE, "w", encoding="utf-8") as f:
         json.dump(records, f, ensure_ascii=False, indent=2)
@@ -751,7 +752,7 @@ def _build_records_data(series: str) -> list:
     rows = []
     for _, name in MODELS.get(series, []):
         r = records.get(name, {})
-        rows.append([name, r.get("inference", False), r.get("sft", False), r.get("dpo", False), r.get("kto", False), r.get("pt", False)])
+        rows.append([name, r.get("inference", False), r.get("inference_fail", False), r.get("sft", False), r.get("dpo", False), r.get("kto", False), r.get("pt", False)])
     return rows
 
 
@@ -765,8 +766,8 @@ def create_record_tab() -> dict[str, "Component"]:
 
     table = gr.Dataframe(
         value=_build_records_data(first_series),
-        headers=["模型名称", "推理成功", "SFT训练", "DPO训练", "KTO训练", "PT训练"],
-        datatype=["str", "bool", "bool", "bool", "bool", "bool"],
+        headers=["模型名称", "推理成功", "推理失败", "SFT训练", "DPO训练", "KTO训练", "PT训练"],
+        datatype=["str", "bool", "bool", "bool", "bool", "bool", "bool"],
         interactive=True,
         wrap=True,
     )
