@@ -755,11 +755,20 @@ def _build_records_data(series: str) -> list:
     return rows
 
 
-def _switch_series_and_save(series: str, current_data) -> tuple:
+def _switch_series(series: str, current_data, is_switching: bool) -> tuple:
     if current_data is not None:
         rows = current_data if isinstance(current_data, list) else current_data.values.tolist()
         _save_records(rows)
-    return _build_records_data(series), ""
+    return _build_records_data(series), True
+
+
+def _auto_save(data, is_switching: bool) -> bool:
+    if is_switching:
+        return False
+    if data is not None:
+        rows = data if isinstance(data, list) else data.values.tolist()
+        _save_records(rows)
+    return False
 
 
 def create_record_tab() -> dict[str, "Component"]:
@@ -768,9 +777,8 @@ def create_record_tab() -> dict[str, "Component"]:
     series_choices = list(MODELS.keys())
     first_series = series_choices[0]
 
-    with gr.Row():
-        series_dd = gr.Dropdown(choices=series_choices, value=first_series, label="模型系列", scale=4)
-        save_btn = gr.Button("保存记录", variant="primary", scale=1)
+    series_dd = gr.Dropdown(choices=series_choices, value=first_series, label="模型系列")
+    switching_flag = gr.State(value=False)
 
     table = gr.Dataframe(
         value=_build_records_data(first_series),
@@ -780,9 +788,7 @@ def create_record_tab() -> dict[str, "Component"]:
         wrap=True,
     )
 
-    save_status = gr.Textbox(label="状态", interactive=False, lines=1)
+    series_dd.change(fn=_switch_series, inputs=[series_dd, table, switching_flag], outputs=[table, switching_flag])
+    table.change(fn=_auto_save, inputs=[table, switching_flag], outputs=switching_flag)
 
-    series_dd.change(fn=_switch_series_and_save, inputs=[series_dd, table], outputs=[table, save_status])
-    save_btn.click(fn=_save_records, inputs=table, outputs=save_status)
-
-    return dict(record_series=series_dd, record_table=table, record_save_status=save_status)
+    return dict(record_series=series_dd, record_table=table)
