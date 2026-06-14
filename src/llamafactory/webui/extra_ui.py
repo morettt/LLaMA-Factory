@@ -740,31 +740,32 @@ def _save_records(data: list) -> str:
     return "✅ 已保存"
 
 
-def _build_records_data() -> list:
+def _build_records_data(series: str) -> list:
     records = _load_records()
     rows = []
-    for series, models in MODELS.items():
-        for _, name in models:
-            r = records.get(name, {})
-            rows.append([name, r.get("inference", False), r.get("training", False)])
+    for _, name in MODELS.get(series, []):
+        r = records.get(name, {})
+        rows.append([name, r.get("inference", False), r.get("training", False)])
     return rows
 
 
 def create_record_tab() -> dict[str, "Component"]:
     gr.Markdown("## 模型测试记录")
 
+    series_choices = list(MODELS.keys())
+    first_series = series_choices[0]
+
+    series_dd = gr.Dropdown(choices=series_choices, value=first_series, label="模型系列")
+
     table = gr.Dataframe(
-        value=_build_records_data(),
+        value=_build_records_data(first_series),
         headers=["模型名称", "推理成功", "训练成功"],
         datatype=["str", "bool", "bool"],
         interactive=True,
         wrap=True,
     )
 
-    with gr.Row():
-        save_btn = gr.Button("保存记录", variant="primary", scale=1)
-        save_status = gr.Textbox(interactive=False, show_label=False, scale=3)
+    series_dd.change(fn=_build_records_data, inputs=series_dd, outputs=table)
+    table.change(fn=_save_records, inputs=table, outputs=gr.State())
 
-    save_btn.click(fn=_save_records, inputs=table, outputs=save_status)
-
-    return dict(record_table=table, record_status=save_status)
+    return dict(record_series=series_dd, record_table=table)
