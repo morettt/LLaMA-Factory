@@ -1,16 +1,4 @@
 {
-  "模": {
-    "inference": true,
-    "training": true
-  },
-  "推": {
-    "inference": true,
-    "training": true
-  },
-  "训": {
-    "inference": true,
-    "training": true
-  },
   "Qwen2-0.5B": {
     "inference": true,
     "sft": false,
@@ -19,7 +7,7 @@
     "pt": false
   },
   "Qwen2-1.5B": {
-    "inference": false,
+    "inference": true,
     "sft": false,
     "dpo": false,
     "kto": false,
@@ -54,7 +42,7 @@
     "pt": false
   },
   "Qwen2-1.5B-Instruct": {
-    "inference": true,
+    "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
@@ -712,7 +700,7 @@
     "pt": false
   },
   "Qwen2.5-Omni-3B": {
-    "inference": true,
+    "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
@@ -803,7 +791,7 @@
     "pt": false
   },
   "Qwen3-0.6B-Base": {
-    "inference": true,
+    "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
@@ -1020,7 +1008,7 @@
     "pt": false
   },
   "Qwen3.5-0.8B-Base": {
-    "inference": true,
+    "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
@@ -1062,7 +1050,7 @@
     "pt": false
   },
   "Qwen3.5-2B-Thinking": {
-    "inference": true,
+    "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
@@ -1110,323 +1098,267 @@
     "kto": false,
     "pt": false
   },
-  "InternLM2.5-1.8B": {
+  "DeepSeek-LLM-7B-Base": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "InternLM2.5-7B": {
+  "DeepSeek-LLM-67B-Base": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "InternLM2.5-20B": {
+  "DeepSeek-LLM-7B-Chat": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "InternLM2.5-1.8B-Chat": {
+  "DeepSeek-LLM-67B-Chat": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "InternLM2.5-7B-Chat": {
+  "DeepSeek-Math-7B-Base": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "InternLM2.5-20B-Chat": {
+  "DeepSeek-Math-7B-Instruct": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "InternLM3-8B-Chat": {
+  "DeepSeek-MoE-16B-Base": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "ChatGLM3-6B-Base": {
+  "DeepSeek-MoE-16B-Chat": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "ChatGLM3-6B-Chat": {
+  "DeepSeek-Coder-6.7B-Base": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-4-9B": {
+  "DeepSeek-Coder-7B-Base": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-4-9B-Chat": {
-    "inference": true,
-    "sft": false,
-    "dpo": false,
-    "kto": false,
-    "pt": false
-  },
-  "GLM-4-9B-1M-Chat": {
+  "DeepSeek-Coder-33B-Base": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-4-0414-9B-Chat": {
+  "DeepSeek-Coder-6.7B-Instruct": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-4-0414-32B-Base": {
+  "DeepSeek-Coder-7B-Instruct": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-4-0414-32B-Chat": {
+  "DeepSeek-Coder-33B-Instruct": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-4.1V-9B-Base": {
+  "DeepSeek-V2-16B-Base": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-4.1V-9B-Thinking": {
+  "DeepSeek-V2-236B-Base": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-4.5-Air-Base": {
+  "DeepSeek-V2-16B-Chat": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-4.5-Base": {
+  "DeepSeek-V2-236B-Chat": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-4.5-Air-Thinking": {
+  "DeepSeek-V2-0628-236B-Chat": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-4.5-Thinking": {
+  "DeepSeek-V2.5-236B-Chat": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-4.5V-Air-Thinking": {
+  "DeepSeek-V2.5-1210-236B-Chat": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-4.6V": {
+  "DeepSeek-Coder-V2-16B-Base": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-4.6V-Flash": {
+  "DeepSeek-Coder-V2-236B-Base": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-4.7-Flash": {
+  "DeepSeek-Coder-V2-16B-Instruct": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-OCR": {
+  "DeepSeek-Coder-V2-236B-Instruct": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-Z1-0414-9B-Chat": {
+  "DeepSeek-V3-671B-Base": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "GLM-Z1-0414-32B-Chat": {
+  "DeepSeek-V3-671B-Chat": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "Gemma-2-2B": {
+  "DeepSeek-V3-0324-671B-Chat": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "Gemma-2-9B": {
+  "DeepSeek-R1-1.5B-Distill": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "Gemma-2-27B": {
+  "DeepSeek-R1-7B-Distill": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "Gemma-2-2B-Instruct": {
+  "DeepSeek-R1-8B-Distill": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "Gemma-2-9B-Instruct": {
+  "DeepSeek-R1-14B-Distill": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "Gemma-2-27B-Instruct": {
+  "DeepSeek-R1-32B-Distill": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "Gemma-3-1B": {
+  "DeepSeek-R1-70B-Distill": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "Gemma-3-4B": {
+  "DeepSeek-R1-671B-Chat-Zero": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "Gemma-3-12B": {
+  "DeepSeek-R1-671B-Chat": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "Gemma-3-27B": {
+  "DeepSeek-R1-0528-8B-Distill": {
     "inference": false,
     "sft": false,
     "dpo": false,
     "kto": false,
     "pt": false
   },
-  "Gemma-3-1B-Instruct": {
+  "DeepSeek-R1-0528-671B-Chat": {
     "inference": false,
-    "sft": false,
-    "dpo": false,
-    "kto": false,
-    "pt": false
-  },
-  "Gemma-3-4B-Instruct": {
-    "inference": false,
-    "sft": false,
-    "dpo": false,
-    "kto": false,
-    "pt": false
-  },
-  "Gemma-3-12B-Instruct": {
-    "inference": false,
-    "sft": false,
-    "dpo": false,
-    "kto": false,
-    "pt": false
-  },
-  "Gemma-3-27B-Instruct": {
-    "inference": false,
-    "sft": false,
-    "dpo": false,
-    "kto": false,
-    "pt": false
-  },
-  "Gemma-4-E2B-Thinking": {
-    "inference": false,
-    "sft": false,
-    "dpo": false,
-    "kto": false,
-    "pt": false
-  },
-  "Gemma-4-E4B-Thinking": {
-    "inference": false,
-    "sft": false,
-    "dpo": false,
-    "kto": false,
-    "pt": false
-  },
-  "Gemma-4-26B-A4B-Thinking": {
-    "inference": false,
-    "sft": false,
-    "dpo": false,
-    "kto": false,
-    "pt": false
-  },
-  "Gemma-4-31B-Thinking": {
-    "inference": true,
     "sft": false,
     "dpo": false,
     "kto": false,
