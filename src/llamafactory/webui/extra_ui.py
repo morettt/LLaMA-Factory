@@ -718,6 +718,7 @@ def create_process_tab() -> dict[str, "Component"]:
 
 
 _RECORDS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_records.json")
+_table_cache = None
 
 
 def _load_records() -> dict:
@@ -729,6 +730,8 @@ def _load_records() -> dict:
 
 
 def _save_records(data) -> None:
+    global _table_cache
+    _table_cache = data
     rows = data if isinstance(data, list) else data.values.tolist()
     records = _load_records()
     for row in rows:
@@ -743,6 +746,11 @@ def _save_records(data) -> None:
             }
     with open(_RECORDS_FILE, "w", encoding="utf-8") as f:
         json.dump(records, f, ensure_ascii=False, indent=2)
+
+
+def _timer_save() -> None:
+    if _table_cache is not None:
+        _save_records(_table_cache)
 
 
 def _build_records_data(series: str) -> list:
@@ -779,6 +787,6 @@ def create_record_tab() -> dict[str, "Component"]:
     series_dd.change(fn=_switch_series, inputs=[series_dd, table], outputs=table)
     table.change(fn=_save_records, inputs=table)
 
-    gr.Timer(value=2).tick(fn=_save_records, inputs=table)
+    gr.Timer(value=2).tick(fn=_timer_save)
 
     return dict(record_series=series_dd, record_table=table)
