@@ -715,3 +715,56 @@ def create_process_tab() -> dict[str, "Component"]:
         process_text=dataset_text,
         process_status=process_status,
     )
+
+
+_RECORDS_FILE = os.path.join("llamaboard_cache", "model_records.json")
+
+
+def _load_records() -> dict:
+    try:
+        with open(_RECORDS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _save_records(data: list) -> str:
+    records = {}
+    for row in data:
+        if row and len(row) >= 3:
+            name = row[0]
+            records[name] = {"inference": bool(row[1]), "training": bool(row[2])}
+    os.makedirs("llamaboard_cache", exist_ok=True)
+    with open(_RECORDS_FILE, "w", encoding="utf-8") as f:
+        json.dump(records, f, ensure_ascii=False, indent=2)
+    return "✅ 已保存"
+
+
+def _build_records_data() -> list:
+    records = _load_records()
+    rows = []
+    for series, models in MODELS.items():
+        for _, name in models:
+            r = records.get(name, {})
+            rows.append([name, r.get("inference", False), r.get("training", False)])
+    return rows
+
+
+def create_record_tab() -> dict[str, "Component"]:
+    gr.Markdown("## 模型测试记录")
+
+    table = gr.Dataframe(
+        value=_build_records_data(),
+        headers=["模型名称", "推理成功", "训练成功"],
+        datatype=["str", "bool", "bool"],
+        interactive=True,
+        wrap=True,
+    )
+
+    with gr.Row():
+        save_btn = gr.Button("保存记录", variant="primary", scale=1)
+        save_status = gr.Textbox(interactive=False, show_label=False, scale=3)
+
+    save_btn.click(fn=_save_records, inputs=table, outputs=save_status)
+
+    return dict(record_table=table, record_status=save_status)

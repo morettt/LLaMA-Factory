@@ -29,7 +29,7 @@ from .components import (
 )
 from .css import CSS
 from .engine import Engine
-from .extra_ui import create_distil_tab, create_extra_tab, create_process_tab
+from .extra_ui import create_distil_tab, create_extra_tab, create_process_tab, create_record_tab
 
 
 if is_gradio_available():
@@ -71,6 +71,9 @@ def create_ui(demo_mode: bool = False) -> "gr.Blocks":
 
         with gr.Tab("数据集处理"):
             engine.manager.add_elems("process", create_process_tab())
+
+        with gr.Tab("模型记录"):
+            engine.manager.add_elems("record", create_record_tab())
 
         engine.manager.add_elems("footer", create_footer())
         demo.load(engine.resume, outputs=engine.manager.get_elem_list(), concurrency_limit=None)
