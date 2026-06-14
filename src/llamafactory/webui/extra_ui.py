@@ -718,7 +718,6 @@ def create_process_tab() -> dict[str, "Component"]:
 
 
 _RECORDS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_records.json")
-_table_cache = None
 
 
 def _load_records() -> dict:
@@ -729,9 +728,7 @@ def _load_records() -> dict:
         return {}
 
 
-def _save_records(data) -> None:
-    global _table_cache
-    _table_cache = data
+def _save_records(data) -> str:
     rows = data if isinstance(data, list) else data.values.tolist()
     records = _load_records()
     for row in rows:
@@ -746,11 +743,7 @@ def _save_records(data) -> None:
             }
     with open(_RECORDS_FILE, "w", encoding="utf-8") as f:
         json.dump(records, f, ensure_ascii=False, indent=2)
-
-
-def _timer_save() -> None:
-    if _table_cache is not None:
-        _save_records(_table_cache)
+    return "已保存"
 
 
 def _build_records_data(series: str) -> list:
@@ -762,9 +755,7 @@ def _build_records_data(series: str) -> list:
     return rows
 
 
-def _switch_series(series: str, current_data) -> list:
-    if current_data is not None:
-        _save_records(current_data)
+def _switch_series(series: str) -> list:
     return _build_records_data(series)
 
 
@@ -774,7 +765,9 @@ def create_record_tab() -> dict[str, "Component"]:
     series_choices = list(MODELS.keys())
     first_series = series_choices[0]
 
-    series_dd = gr.Dropdown(choices=series_choices, value=first_series, label="模型系列")
+    with gr.Row():
+        series_dd = gr.Dropdown(choices=series_choices, value=first_series, label="模型系列", scale=4)
+        save_btn = gr.Button("保存记录", variant="primary", scale=1)
 
     table = gr.Dataframe(
         value=_build_records_data(first_series),
@@ -784,9 +777,9 @@ def create_record_tab() -> dict[str, "Component"]:
         wrap=True,
     )
 
-    series_dd.change(fn=_switch_series, inputs=[series_dd, table], outputs=table)
-    table.change(fn=_save_records, inputs=table)
+    save_status = gr.Textbox(label="状态", interactive=False, lines=1)
 
-    gr.Timer(value=2).tick(fn=_timer_save)
+    series_dd.change(fn=_switch_series, inputs=series_dd, outputs=table)
+    save_btn.click(fn=_save_records, inputs=table, outputs=save_status)
 
-    return dict(record_series=series_dd, record_table=table)
+    return dict(record_series=series_dd, record_table=table, record_save_status=save_status)
