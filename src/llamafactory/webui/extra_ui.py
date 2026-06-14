@@ -349,7 +349,8 @@ def _run_distil(
         status = f"[{bar}] {pct:.1f}%\n已处理：{counter['done']}/{total}  成功：{counter['success']}  失败：{counter['fail']}"
         if _distil_stop.is_set():
             status += "\n⏹ 停止中..."
-        yield status, gr.update(), gr.update(), gr.update(), gr.update(visible=False)
+        page_content, page_info_val, page_idx = _get_page(output_file, 9999)
+        yield status, page_content, page_info_val, page_idx, gr.update(visible=False)
         time.sleep(2)
 
     final_status = f"✅ 蒸馏完成！\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
