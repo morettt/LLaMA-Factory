@@ -29,7 +29,7 @@ from .components import (
 )
 from .css import CSS
 from .engine import Engine
-from .extra_ui import create_distil_tab, create_extra_tab, create_process_tab, create_record_tab
+from .extra_ui import create_distil_tab, create_extra_tab, create_process_tab, create_record_tab, _build_records_data
 
 
 if is_gradio_available():
@@ -77,6 +77,9 @@ def create_ui(demo_mode: bool = False) -> "gr.Blocks":
 
         engine.manager.add_elems("footer", create_footer())
         demo.load(engine.resume, outputs=engine.manager.get_elem_list(), concurrency_limit=None)
+        record_table = engine.manager.get_elem_by_id("record.record_table")
+        record_series = engine.manager.get_elem_by_id("record.record_series")
+        demo.load(fn=_build_records_data, inputs=record_series, outputs=record_table)
         lang.change(engine.change_lang, [lang], engine.manager.get_elem_list(), queue=False)
         lang.input(save_config, inputs=[lang], queue=False)
 
