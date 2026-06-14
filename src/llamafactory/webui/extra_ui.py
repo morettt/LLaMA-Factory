@@ -60,20 +60,22 @@ def _get_folder_size_gb(folder: str) -> float:
     return total / (2**30)
 
 
-_ALL_MODELS: dict[str, str] = {}
-for _series, _entries in MODELS.items():
-    for _mid, _mname in _entries:
-        _ALL_MODELS[_mname] = _mid
+def _update_model_choices(series: str) -> "gr.Dropdown":
+    choices = [name for _, name in MODELS.get(series, [])]
+    return gr.Dropdown(choices=choices, value=choices[0] if choices else None)
 
 
-def _get_model_id_by_name(model_name: str) -> str:
-    return _ALL_MODELS.get(model_name, "")
+def _get_model_id(series: str, model_name: str) -> str:
+    for mid, mname in MODELS.get(series, []):
+        if mname == model_name:
+            return mid
+    return ""
 
 
-def _check_space(download_path: str, model_name: str) -> str:
+def _check_space(download_path: str, series: str, model_name: str) -> str:
     if not download_path.strip():
         return "请填写下载路径。"
-    model_id = _get_model_id_by_name(model_name)
+    model_id = _get_model_id(series, model_name)
     if not model_id:
         return "请先选择模型。"
     free_gb = _get_free_space_gb(download_path)
@@ -91,11 +93,11 @@ def _check_space(download_path: str, model_name: str) -> str:
     return "\n".join(lines)
 
 
-def _download_model(download_path: str, model_name: str) -> Generator[str, None, None]:
+def _download_model(download_path: str, series: str, model_name: str) -> Generator[str, None, None]:
     if not download_path.strip():
         yield "请填写下载路径。"
         return
-    model_id = _get_model_id_by_name(model_name)
+    model_id = _get_model_id(series, model_name)
     if not model_id:
         yield "请先选择模型。"
         return
@@ -453,17 +455,15 @@ def create_distil_tab() -> dict[str, "Component"]:
 
 
 def create_extra_tab() -> dict[str, "Component"]:
-    all_model_names = list(_ALL_MODELS.keys())
+    series_choices = list(MODELS.keys())
+    first_series = series_choices[0]
+    first_models = [name for _, name in MODELS[first_series]]
 
     gr.Markdown("## 模型下载")
 
-    model_dd = gr.Dropdown(
-        choices=all_model_names,
-        value=None,
-        label="搜索模型（输入关键字过滤）",
-        allow_custom_value=False,
-        filterable=True,
-    )
+    with gr.Row():
+        series_dd = gr.Dropdown(choices=series_choices, value=first_series, label="模型系列", scale=1)
+        model_dd = gr.Dropdown(choices=first_models, value=first_models[0], label="选择模型（可输入关键字过滤）", scale=2, filterable=True)
 
     download_path = gr.Textbox(value="/root/autodl-tmp", label="下载路径")
 
@@ -489,12 +489,14 @@ def create_extra_tab() -> dict[str, "Component"]:
 
     delete_status = gr.Textbox(label="操作结果", interactive=False, lines=1)
 
-    check_btn.click(fn=_check_space, inputs=[download_path, model_dd], outputs=status_box)
-    download_btn.click(fn=_download_model, inputs=[download_path, model_dd], outputs=status_box)
+    series_dd.change(fn=_update_model_choices, inputs=series_dd, outputs=model_dd)
+    check_btn.click(fn=_check_space, inputs=[download_path, series_dd, model_dd], outputs=status_box)
+    download_btn.click(fn=_download_model, inputs=[download_path, series_dd, model_dd], outputs=status_box)
     refresh_btn.click(fn=_refresh_models, inputs=download_path, outputs=[model_table, delete_dd])
     delete_btn.click(fn=_delete_model, inputs=[download_path, delete_dd], outputs=[model_table, delete_dd, delete_status])
 
     return dict(
+        extra_series=series_dd,
         extra_model=model_dd,
         extra_download_path=download_path,
         extra_status=status_box,
