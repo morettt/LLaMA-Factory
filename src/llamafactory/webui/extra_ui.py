@@ -366,8 +366,8 @@ def _run_distil(
     final_status = f"✅ 蒸馏完成！\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
     if _distil_stop.is_set():
         final_status = f"⏹ 已停止。\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
-    page_content, page_info, page_idx = _get_page(output_file, 9999)
-    yield final_status, page_content, page_info, page_idx, gr.update(visible=True)
+    page_content, page_info_val, page_idx = _get_page(output_file, 9999)
+    yield final_status, page_content, page_info_val, page_idx, gr.DownloadButton(value=output_file, visible=True)
 
 
 def create_distil_tab() -> dict[str, "Component"]:
@@ -419,9 +419,7 @@ def create_distil_tab() -> dict[str, "Component"]:
         next_btn = gr.Button("下一页", scale=1)
         page_info = gr.Textbox(value="第 1 页 / 共 1 页", interactive=False, show_label=False, scale=2)
 
-    with gr.Row():
-        download_btn = gr.Button("下载数据集", variant="secondary", scale=1, visible=False)
-        download_file = gr.File(label="点击下载", interactive=False, visible=False, scale=3)
+    download_btn = gr.DownloadButton(label="下载数据集", value=None, visible=False)
 
     page_state = gr.State(value=0)
 
@@ -433,13 +431,6 @@ def create_distil_tab() -> dict[str, "Component"]:
     stop_btn.click(fn=_stop_distil, outputs=distil_status)
     prev_btn.click(fn=_prev_page, inputs=[output_file, page_state], outputs=[distil_output, page_info, page_state])
     next_btn.click(fn=_next_page, inputs=[output_file, page_state], outputs=[distil_output, page_info, page_state])
-
-    def _prepare_download(path: str):
-        if os.path.exists(path):
-            return gr.File(value=path, visible=True)
-        return gr.File(value=None, visible=False)
-
-    download_btn.click(fn=_prepare_download, inputs=output_file, outputs=download_file)
 
     # 拉取模型列表 + 保存配置
     api_key.change(fn=_fetch_models, inputs=[api_key, api_base], outputs=model)
