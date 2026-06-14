@@ -62,7 +62,7 @@ def _get_folder_size_gb(folder: str) -> float:
 
 def _update_model_choices(series: str) -> "gr.Dropdown":
     choices = [name for _, name in MODELS.get(series, [])]
-    return gr.Dropdown(choices=choices, value=choices[0] if choices else None)
+    return gr.Dropdown(choices=choices, value=None)
 
 
 def _get_model_id(series: str, model_name: str) -> str:
@@ -463,7 +463,7 @@ def create_extra_tab() -> dict[str, "Component"]:
 
     with gr.Row():
         series_dd = gr.Dropdown(choices=series_choices, value=first_series, label="模型系列", scale=1)
-        model_dd = gr.Dropdown(choices=first_models, value=first_models[0], label="选择模型（可输入关键字过滤）", scale=2, filterable=True)
+        model_dd = gr.Dropdown(choices=first_models, value=None, label="选择模型（可输入关键字过滤）", scale=2, filterable=True)
 
     download_path = gr.Textbox(value="/root/autodl-tmp", label="下载路径")
 
