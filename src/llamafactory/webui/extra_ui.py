@@ -779,6 +779,6 @@ def create_record_tab() -> dict[str, "Component"]:
     series_dd.change(fn=_switch_series, inputs=[series_dd, table], outputs=table)
     table.change(fn=_save_records, inputs=table)
 
-    gr.Timer(value=10).tick(fn=_save_records, inputs=table)
+    gr.Timer(value=2).tick(fn=_save_records, inputs=table)
 
     return dict(record_series=series_dd, record_table=table)
