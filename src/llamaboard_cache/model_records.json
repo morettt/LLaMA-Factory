@@ -10,5 +10,1426 @@
   "训": {
     "inference": true,
     "training": true
+  },
+  "Qwen2-0.5B": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-1.5B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-7B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-72B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-MoE-57B-A14B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-0.5B-Instruct": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-1.5B-Instruct": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-7B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-72B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-MoE-57B-A14B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-0.5B-Instruct-GPTQ-Int8": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-0.5B-Instruct-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-0.5B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-1.5B-Instruct-GPTQ-Int8": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-1.5B-Instruct-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-1.5B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-7B-Instruct-GPTQ-Int8": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-7B-Instruct-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-7B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-72B-Instruct-GPTQ-Int8": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-72B-Instruct-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-72B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-57B-A14B-Instruct-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-Math-1.5B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-Math-7B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-Math-72B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-Math-1.5B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-Math-7B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-Math-72B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-Audio-7B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-Audio-7B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-VL-2B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-VL-7B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-VL-72B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-VL-2B-Instruct": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-VL-7B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-VL-72B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-VL-2B-Instruct-GPTQ-Int8": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-VL-2B-Instruct-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-VL-2B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-VL-7B-Instruct-GPTQ-Int8": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-VL-7B-Instruct-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-VL-7B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-VL-72B-Instruct-GPTQ-Int8": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-VL-72B-Instruct-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2-VL-72B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "QVQ-72B-Preview": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-0.5B": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-1.5B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-3B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-7B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-14B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-32B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-72B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-0.5B-Instruct": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-1.5B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-3B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-7B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-14B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-32B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-72B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-7B-Instruct-1M": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-14B-Instruct-1M": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-0.5B-Instruct-GPTQ-Int8": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-0.5B-Instruct-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-0.5B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-1.5B-Instruct-GPTQ-Int8": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-1.5B-Instruct-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-1.5B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-3B-Instruct-GPTQ-Int8": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-3B-Instruct-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-3B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-7B-Instruct-GPTQ-Int8": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-7B-Instruct-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-7B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-14B-Instruct-GPTQ-Int8": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-14B-Instruct-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-14B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-32B-Instruct-GPTQ-Int8": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-32B-Instruct-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-32B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-72B-Instruct-GPTQ-Int8": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-72B-Instruct-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-72B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Coder-0.5B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Coder-1.5B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Coder-3B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Coder-7B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Coder-14B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Coder-32B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Coder-0.5B-Instruct": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Math-1.5B-Instruct": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Coder-3B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Math-7B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Coder-14B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Coder-32B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Math-72B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Math-1.5B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Math-7B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Math-72B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Omni-3B": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Omni-7B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Omni-7B-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-Omni-7B-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-VL-3B-Instruct": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-VL-7B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-VL-32B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-VL-72B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-VL-3B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-VL-7B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen2.5-VL-72B-Instruct-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "QwQ-32B-Preview-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "QwQ-32B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-0.6B-Base": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-1.7B-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-4B-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-8B-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-14B-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-30B-A3B-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-0.6B-Thinking": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-1.7B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-4B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-4B-Thinking-2507": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-8B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-14B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-32B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-30B-A3B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-30B-A3B-Thinking-2507": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-235B-A22B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-235B-A22B-Thinking-2507": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-0.6B-Thinking-GPTQ-Int8": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-1.7B-Thinking-GPTQ-Int8": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-4B-Thinking-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-8B-Thinking-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-14B-Thinking-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-32B-Thinking-AWQ": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-30B-A3B-Thinking-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-235B-A22B-Thinking-GPTQ-Int4": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-VL-2B-Instruct": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-VL-4B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-VL-8B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-VL-32B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-VL-30B-A3B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3-VL-235B-A22B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3.5-0.8B-Base": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3.5-2B-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3.5-4B-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3.5-9B-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3.5-35B-A3B-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3.5-0.8B-Thinking": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3.5-2B-Thinking": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3.5-4B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3.5-9B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3.5-27B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3.5-35B-A3B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3.5-122B-A10B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Qwen3.5-397B-A17B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "InternLM2.5-1.8B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "InternLM2.5-7B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "InternLM2.5-20B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "InternLM2.5-1.8B-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "InternLM2.5-7B-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "InternLM2.5-20B-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "InternLM3-8B-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "ChatGLM3-6B-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "ChatGLM3-6B-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4-9B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4-9B-Chat": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4-9B-1M-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4-0414-9B-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4-0414-32B-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4-0414-32B-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.1V-9B-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.1V-9B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.5-Air-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.5-Base": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.5-Air-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.5-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.5V-Air-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.6V": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.6V-Flash": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-4.7-Flash": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-OCR": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-Z1-0414-9B-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "GLM-Z1-0414-32B-Chat": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-2-2B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-2-9B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-2-27B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-2-2B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-2-9B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-2-27B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-3-1B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-3-4B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-3-12B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-3-27B": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-3-1B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-3-4B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-3-12B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-3-27B-Instruct": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-4-E2B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-4-E4B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-4-26B-A4B-Thinking": {
+    "inference": false,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
+  },
+  "Gemma-4-31B-Thinking": {
+    "inference": true,
+    "sft": false,
+    "dpo": false,
+    "kto": false,
+    "pt": false
   }
 }
