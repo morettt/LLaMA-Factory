@@ -274,6 +274,12 @@ MODELS = {
         ('LLM-Research/Llama-4-Maverick-17B-128E-Instruct', 'Llama-4-Maverick-17B-128E-Instruct'),
     ],
     'Gemma 系列': [
+        ('AI-ModelScope/gemma-2b', 'Gemma-2B'),
+        ('AI-ModelScope/gemma-7b', 'Gemma-7B'),
+        ('AI-ModelScope/gemma-2b-it', 'Gemma-2B-Instruct'),
+        ('AI-ModelScope/gemma-7b-it', 'Gemma-7B-Instruct'),
+        ('google/gemma-1.1-2b-it', 'Gemma-1.1-2B-Instruct'),
+        ('google/gemma-1.1-7b-it', 'Gemma-1.1-7B-Instruct'),
         ('LLM-Research/gemma-2-2b', 'Gemma-2-2B'),
         ('LLM-Research/gemma-2-9b', 'Gemma-2-9B'),
         ('LLM-Research/gemma-2-27b', 'Gemma-2-27B'),
