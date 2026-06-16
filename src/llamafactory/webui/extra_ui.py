@@ -202,7 +202,7 @@ def _start_download(download_path: str, series: str, model_name: str) -> str:
 
 
 def _poll_download_status():
-    if _active_downloads:
+    if any(s["active"] for s in _active_downloads.values()):
         return _build_combined_status()
     return gr.update()
 
