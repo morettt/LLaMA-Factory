@@ -177,12 +177,9 @@ def _start_download(download_path: str, series: str, model_name: str) -> str:
                 current_gb = _get_folder_size_gb(local_dir) if os.path.exists(local_dir) else 0.0
                 mgb = _active_downloads[model_name]["model_gb"]
                 if mgb:
-                    pct = min(current_gb / mgb * 100, 100.0)
-                    bar = "█" * 20 if pct >= 100.0 else "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
-                    if pct >= 100.0:
-                        _active_downloads[model_name]["status"] = f"[{bar}] 正在校验/整理文件，请稍候..."
-                    else:
-                        _active_downloads[model_name]["status"] = f"[{bar}] {pct:.1f}%  已下载：{current_gb:.2f} / {mgb:.1f} GB"
+                    pct = min(current_gb / mgb * 100, 99.0)
+                    bar = "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
+                    _active_downloads[model_name]["status"] = f"[{bar}] {pct:.1f}%  已下载：{current_gb:.2f} / {mgb:.1f} GB"
                 else:
                     _active_downloads[model_name]["status"] = f"下载中... 已下载 {current_gb:.2f} GB"
                 time.sleep(2)
