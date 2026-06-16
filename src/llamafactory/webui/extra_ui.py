@@ -102,6 +102,44 @@ _download_state: dict = {
 }
 
 
+def _run_download_thread(model_id: str, local_dir: str):
+    """独立后台线程：负责下载 + 持续更新 _download_state['status']，与 Gradio 连接无关。"""
+    dl_result = {"done": False, "error": None, "path": None}
+
+    def _do_download():
+        try:
+            from modelscope import snapshot_download
+            dl_result["path"] = snapshot_download(model_id, local_dir=local_dir)
+        except Exception as e:
+            dl_result["error"] = e
+        finally:
+            dl_result["done"] = True
+
+    threading.Thread(target=_do_download, daemon=True).start()
+
+    while not dl_result["done"]:
+        current_gb = _get_folder_size_gb(local_dir) if os.path.exists(local_dir) else 0.0
+        mgb = _download_state["model_gb"]
+        if mgb:
+            pct = min(current_gb / mgb * 100, 100.0)
+            bar = "█" * 20 if pct >= 100.0 else "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
+            _download_state["status"] = (
+                f"[{bar}] 正在校验/整理文件，请稍候..."
+                if pct >= 100.0
+                else f"[{bar}] {pct:.1f}%\n已下载：{current_gb:.2f} GB / {mgb:.1f} GB"
+            )
+        else:
+            _download_state["status"] = f"下载中... 已下载 {current_gb:.2f} GB"
+        time.sleep(2)
+
+    if dl_result["error"]:
+        _download_state["status"] = f"❌ 下载失败：{dl_result['error']}"
+    else:
+        final_gb = _get_folder_size_gb(local_dir)
+        _download_state["status"] = f"✅ 下载完毕！\n大小：{final_gb:.2f} GB\n路径：{dl_result['path']}"
+    _download_state["active"] = False
+
+
 def _start_and_stream(download_path: str, series: str, model_name: str) -> Generator[str, None, None]:
     if not download_path.strip():
         yield "请填写下载路径。"
@@ -145,40 +183,14 @@ def _start_and_stream(download_path: str, series: str, model_name: str) -> Gener
         _download_state["status"] += "⚠️ 无法确认模型大小，继续下载...\n"
     yield _download_state["status"]
 
-    dl_result = {"done": False, "error": None, "path": None}
+    # 启动独立后台线程，状态更新与当前 Gradio 连接完全解耦
+    threading.Thread(target=_run_download_thread, args=(model_id, local_dir), daemon=True).start()
 
-    def _do_download():
-        try:
-            from modelscope import snapshot_download
-            dl_result["path"] = snapshot_download(model_id, local_dir=local_dir)
-        except Exception as e:
-            dl_result["error"] = e
-        finally:
-            dl_result["done"] = True
-
-    threading.Thread(target=_do_download, daemon=True).start()
-
-    while not dl_result["done"]:
-        current_gb = _get_folder_size_gb(local_dir) if os.path.exists(local_dir) else 0.0
-        mgb = _download_state["model_gb"]
-        if mgb:
-            pct = min(current_gb / mgb * 100, 100.0)
-            bar = "█" * 20 if pct >= 100.0 else "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
-            status = f"[{bar}] 正在校验/整理文件，请稍候..." if pct >= 100.0 else f"[{bar}] {pct:.1f}%\n已下载：{current_gb:.2f} GB / {mgb:.1f} GB"
-        else:
-            status = f"下载中... 已下载 {current_gb:.2f} GB"
-        _download_state["status"] = status
-        yield status
+    # generator 只负责读取并 yield，不参与状态更新
+    while _download_state["active"]:
+        yield _download_state["status"]
         time.sleep(2)
-
-    if dl_result["error"]:
-        final = f"❌ 下载失败：{dl_result['error']}"
-    else:
-        final_gb = _get_folder_size_gb(local_dir)
-        final = f"✅ 下载完毕！\n大小：{final_gb:.2f} GB\n路径：{dl_result['path']}"
-    _download_state["status"] = final
-    _download_state["active"] = False
-    yield final
+    yield _download_state["status"]
 
 
 def _resume_download_stream() -> Generator[str, None, None]:
