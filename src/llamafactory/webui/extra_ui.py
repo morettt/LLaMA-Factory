@@ -93,59 +93,94 @@ def _check_space(download_path: str, series: str, model_name: str) -> str:
     return "\n".join(lines)
 
 
-def _download_model(download_path: str, series: str, model_name: str) -> Generator[str, None, None]:
+_download_state: dict = {
+    "active": False,
+    "status": "",
+    "model_name": "",
+    "model_gb": None,
+    "local_dir": "",
+}
+
+
+def _start_download(download_path: str, series: str, model_name: str) -> str:
     if not download_path.strip():
-        yield "请填写下载路径。"
-        return
+        return "请填写下载路径。"
     model_id = _get_model_id(series, model_name)
     if not model_id:
-        yield "请先选择模型。"
-        return
+        return "请先选择模型。"
 
-    yield f"准备下载：{model_name}\nModel ID：{model_id}\n下载路径：{download_path}\n"
-
-    free_gb = _get_free_space_gb(download_path)
-    yield f"当前剩余空间：{free_gb:.1f} GB\n正在查询模型大小...\n"
-
-    model_gb = _get_model_size_gb(model_id)
-    if model_gb is not None:
-        yield f"模型大小：{model_gb:.1f} GB\n"
-        if free_gb < model_gb:
-            yield f"❌ 空间不足！需要 {model_gb:.1f} GB，当前只有 {free_gb:.1f} GB，已取消下载。"
-            return
-        yield "空间充足，开始下载...\n"
-    else:
-        yield "⚠️ 无法确认模型大小，继续下载...\n"
+    if _download_state["active"]:
+        return f"⚠️ 当前正在下载：{_download_state['model_name']}，请等待完成后再启动新下载。"
 
     local_dir = os.path.join(download_path, model_name)
-    result = {"done": False, "error": None, "path": None}
+    _download_state.update({
+        "active": True,
+        "status": f"准备下载：{model_name}\nModel ID：{model_id}\n下载路径：{download_path}\n",
+        "model_name": model_name,
+        "model_gb": None,
+        "local_dir": local_dir,
+    })
 
-    def _do_download():
+    def _run():
         try:
-            from modelscope import snapshot_download
-            result["path"] = snapshot_download(model_id, local_dir=local_dir)
+            free_gb = _get_free_space_gb(download_path)
+            _download_state["status"] += f"当前剩余空间：{free_gb:.1f} GB\n正在查询模型大小...\n"
+
+            model_gb = _get_model_size_gb(model_id)
+            _download_state["model_gb"] = model_gb
+
+            if model_gb is not None:
+                _download_state["status"] += f"模型大小：{model_gb:.1f} GB\n"
+                if free_gb < model_gb:
+                    _download_state["status"] += f"❌ 空间不足！需要 {model_gb:.1f} GB，当前只有 {free_gb:.1f} GB，已取消下载。"
+                    _download_state["active"] = False
+                    return
+                _download_state["status"] += "空间充足，开始下载...\n"
+            else:
+                _download_state["status"] += "⚠️ 无法确认模型大小，继续下载...\n"
+
+            dl_result = {"done": False, "error": None, "path": None}
+
+            def _do_download():
+                try:
+                    from modelscope import snapshot_download
+                    dl_result["path"] = snapshot_download(model_id, local_dir=local_dir)
+                except Exception as e:
+                    dl_result["error"] = e
+                finally:
+                    dl_result["done"] = True
+
+            threading.Thread(target=_do_download, daemon=True).start()
+
+            while not dl_result["done"]:
+                current_gb = _get_folder_size_gb(local_dir) if os.path.exists(local_dir) else 0.0
+                mgb = _download_state["model_gb"]
+                if mgb:
+                    pct = min(current_gb / mgb * 100, 99.0)
+                    bar = "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
+                    _download_state["status"] = f"[{bar}] {pct:.1f}%\n已下载：{current_gb:.2f} GB / {mgb:.1f} GB"
+                else:
+                    _download_state["status"] = f"下载中... 已下载 {current_gb:.2f} GB"
+                time.sleep(2)
+
+            if dl_result["error"]:
+                _download_state["status"] = f"❌ 下载失败：{dl_result['error']}"
+            else:
+                final_gb = _get_folder_size_gb(local_dir)
+                _download_state["status"] = f"✅ 下载完毕！\n大小：{final_gb:.2f} GB\n路径：{dl_result['path']}"
         except Exception as e:
-            result["error"] = e
+            _download_state["status"] = f"❌ 下载出错：{e}"
         finally:
-            result["done"] = True
+            _download_state["active"] = False
 
-    threading.Thread(target=_do_download, daemon=True).start()
+    threading.Thread(target=_run, daemon=True).start()
+    return _download_state["status"]
 
-    while not result["done"]:
-        current_gb = _get_folder_size_gb(local_dir) if os.path.exists(local_dir) else 0.0
-        if model_gb:
-            pct = min(current_gb / model_gb * 100, 99.0)
-            bar = "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
-            yield f"[{bar}] {pct:.1f}%\n已下载：{current_gb:.2f} GB / {model_gb:.1f} GB"
-        else:
-            yield f"下载中... 已下载 {current_gb:.2f} GB"
-        time.sleep(2)
 
-    if result["error"]:
-        yield f"❌ 下载失败：{result['error']}"
-    else:
-        final_gb = _get_folder_size_gb(local_dir)
-        yield f"✅ 下载完毕！\n大小：{final_gb:.2f} GB\n路径：{result['path']}"
+def _poll_download_status() -> str:
+    if _download_state["active"]:
+        return _download_state["status"]
+    return gr.update()
 
 
 def _list_downloaded_models(download_path: str) -> list[list]:
@@ -491,9 +526,12 @@ def create_extra_tab() -> dict[str, "Component"]:
 
     series_dd.change(fn=_update_model_choices, inputs=series_dd, outputs=model_dd)
     check_btn.click(fn=_check_space, inputs=[download_path, series_dd, model_dd], outputs=status_box)
-    download_btn.click(fn=_download_model, inputs=[download_path, series_dd, model_dd], outputs=status_box)
+    download_btn.click(fn=_start_download, inputs=[download_path, series_dd, model_dd], outputs=status_box)
     refresh_btn.click(fn=_refresh_models, inputs=download_path, outputs=[model_table, delete_dd])
     delete_btn.click(fn=_delete_model, inputs=[download_path, delete_dd], outputs=[model_table, delete_dd, delete_status])
+
+    timer = gr.Timer(value=2)
+    timer.tick(fn=_poll_download_status, outputs=status_box)
 
     return dict(
         extra_series=series_dd,
