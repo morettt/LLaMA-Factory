@@ -87,7 +87,7 @@ def create_chat_box(
                 temperature = gr.Slider(minimum=0.01, maximum=1.5, value=0.95, step=0.01)
                 skip_special_tokens = gr.Checkbox(value=True)
                 escape_html = gr.Checkbox(value=True)
-                enable_thinking = gr.Checkbox(value=True)
+                enable_thinking = gr.Checkbox(value=False)
                 clear_btn = gr.Button()
 
     tools.input(check_json_schema, inputs=[tools, engine.manager.get_elem_by_id("top.lang")])
