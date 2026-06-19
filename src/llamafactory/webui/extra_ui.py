@@ -581,7 +581,7 @@ def create_extra_tab() -> dict[str, "Component"]:
 
     series_dd.change(fn=_update_model_choices, inputs=series_dd, outputs=model_dd)
     check_btn.click(fn=_check_space, inputs=[download_path, series_dd, model_dd], outputs=status_box)
-    download_btn.click(fn=_start_and_stream, inputs=[download_path, series_dd, model_dd], outputs=status_box)
+    download_btn.click(fn=_start_and_stream, inputs=[download_path, series_dd, model_dd], outputs=status_box, concurrency_limit=None)
     refresh_btn.click(fn=_refresh_models, inputs=download_path, outputs=[model_table, delete_dd])
     delete_btn.click(fn=_delete_model, inputs=[download_path, delete_dd], outputs=[model_table, delete_dd, delete_status])
 
