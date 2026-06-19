@@ -114,8 +114,29 @@ def _any_active() -> bool:
         return any(slot["active"] for slot in _active_downloads.values())
 
 
-def _run_download_thread(model_id: str, local_dir: str, model_name: str):
-    """独立后台线程：负责下载 + 持续更新对应 slot 的 status，与 Gradio 连接无关。"""
+def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, available_gb: float, reserved_gb: float):
+    """后台线程：查询大小 → 检查空间 → 下载，全程更新 _active_downloads[model_name]['status']。"""
+    model_gb = _get_model_size_gb(model_id)
+    with _downloads_lock:
+        if model_name not in _active_downloads:
+            return
+        _active_downloads[model_name]["model_gb"] = model_gb
+
+    if model_gb is not None:
+        if available_gb < model_gb:
+            msg = f"❌ 空间不足！{model_name} 需要 {model_gb:.1f} GB，可用仅 {available_gb:.1f} GB"
+            if reserved_gb > 0:
+                msg += f"（含已预留 {reserved_gb:.1f} GB）"
+            with _downloads_lock:
+                _active_downloads[model_name]["status"] = msg
+                _active_downloads[model_name]["active"] = False
+            return
+        with _downloads_lock:
+            _active_downloads[model_name]["status"] = f"准备下载：{model_name}\n大小：{model_gb:.1f} GB，空间充足，开始下载..."
+    else:
+        with _downloads_lock:
+            _active_downloads[model_name]["status"] = f"准备下载：{model_name}\n⚠️ 无法确认模型大小，继续下载..."
+
     dl_result = {"done": False, "error": None, "path": None}
 
     def _do_download():
@@ -158,20 +179,17 @@ def _run_download_thread(model_id: str, local_dir: str, model_name: str):
             _active_downloads[model_name]["active"] = False
 
 
-def _start_and_stream(download_path: str, series: str, model_name: str) -> Generator[str, None, None]:
+def _start_download(download_path: str, series: str, model_name: str) -> str:
+    """非 streaming：立即注册下载任务并返回，进度由 Timer 轮询更新。"""
     if not download_path.strip():
-        yield "请填写下载路径。"
-        return
+        return "请填写下载路径。"
     model_id = _get_model_id(series, model_name)
     if not model_id:
-        yield "请先选择模型。"
-        return
+        return "请先选择模型。"
 
     with _downloads_lock:
         if model_name in _active_downloads and _active_downloads[model_name]["active"]:
-            yield f"⚠️ {model_name} 已在下载中，请勿重复提交。"
-            return
-        # 计算所有正在下载的模型已预留的空间
+            return _get_combined_status()
         reserved_gb = sum(
             slot["model_gb"] for slot in _active_downloads.values()
             if slot["active"] and slot["model_gb"]
@@ -193,39 +211,23 @@ def _start_and_stream(download_path: str, series: str, model_name: str) -> Gener
                 + "\n正在查询模型大小..."
             ),
         }
-    yield _get_combined_status()
 
-    model_gb = _get_model_size_gb(model_id)
+    threading.Thread(
+        target=_run_full_download_thread,
+        args=(model_id, local_dir, model_name, available_gb, reserved_gb),
+        daemon=True,
+    ).start()
+
+    return _get_combined_status()
+
+
+def _poll_status():
+    """给 gr.Timer 用：有下载时返回最新状态，否则不更新组件。"""
     with _downloads_lock:
-        _active_downloads[model_name]["model_gb"] = model_gb
-
-    if model_gb is not None:
-        if available_gb < model_gb:
-            msg = f"❌ 空间不足！{model_name} 需要 {model_gb:.1f} GB，可用仅 {available_gb:.1f} GB"
-            if reserved_gb > 0:
-                msg += f"（含已预留 {reserved_gb:.1f} GB）"
-            with _downloads_lock:
-                _active_downloads[model_name]["status"] = msg
-                _active_downloads[model_name]["active"] = False
-            yield _get_combined_status()
-            return
-        with _downloads_lock:
-            _active_downloads[model_name]["status"] = f"准备下载：{model_name}\n大小：{model_gb:.1f} GB，空间充足，开始下载..."
-    else:
-        with _downloads_lock:
-            _active_downloads[model_name]["status"] = f"准备下载：{model_name}\n⚠️ 无法确认模型大小，继续下载..."
-    yield _get_combined_status()
-
-    threading.Thread(target=_run_download_thread, args=(model_id, local_dir, model_name), daemon=True).start()
-
-    while True:
-        with _downloads_lock:
-            still_active = _active_downloads.get(model_name, {}).get("active", False)
-        if not still_active:
-            break
-        yield _get_combined_status()
-        time.sleep(2)
-    yield _get_combined_status()
+        has_downloads = bool(_active_downloads)
+    if not has_downloads:
+        return gr.update()
+    return _get_combined_status()
 
 
 def _resume_download_stream() -> Generator[str, None, None]:
@@ -581,7 +583,8 @@ def create_extra_tab() -> dict[str, "Component"]:
 
     series_dd.change(fn=_update_model_choices, inputs=series_dd, outputs=model_dd)
     check_btn.click(fn=_check_space, inputs=[download_path, series_dd, model_dd], outputs=status_box)
-    download_btn.click(fn=_start_and_stream, inputs=[download_path, series_dd, model_dd], outputs=status_box, concurrency_limit=None)
+    download_btn.click(fn=_start_download, inputs=[download_path, series_dd, model_dd], outputs=status_box)
+    gr.Timer(value=2).tick(fn=_poll_status, outputs=status_box)
     refresh_btn.click(fn=_refresh_models, inputs=download_path, outputs=[model_table, delete_dd])
     delete_btn.click(fn=_delete_model, inputs=[download_path, delete_dd], outputs=[model_table, delete_dd, delete_status])
 

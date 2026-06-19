@@ -29,7 +29,7 @@ from .components import (
 )
 from .css import CSS
 from .engine import Engine
-from .extra_ui import create_distil_tab, create_extra_tab, create_process_tab, create_record_tab, _build_records_data, _resume_download_stream
+from .extra_ui import create_distil_tab, create_extra_tab, create_process_tab, create_record_tab, _build_records_data
 
 
 if is_gradio_available():
@@ -80,8 +80,6 @@ def create_ui(demo_mode: bool = False) -> "gr.Blocks":
         record_table = engine.manager.get_elem_by_id("record.record_table")
         record_series = engine.manager.get_elem_by_id("record.record_series")
         demo.load(fn=_build_records_data, inputs=record_series, outputs=record_table)
-        extra_status = engine.manager.get_elem_by_id("extra.extra_status")
-        demo.load(fn=_resume_download_stream, outputs=extra_status)
         lang.change(engine.change_lang, [lang], engine.manager.get_elem_list(), queue=False)
         lang.input(save_config, inputs=[lang], queue=False)
 
