@@ -586,7 +586,10 @@ def create_extra_tab() -> dict[str, "Component"]:
     check_btn.click(fn=_check_space, inputs=[download_path, series_dd, model_dd], outputs=status_box)
     download_btn.click(fn=_start_download, inputs=[download_path, series_dd, model_dd], outputs=status_box)
     refresh_btn.click(fn=_refresh_models, inputs=download_path, outputs=[model_table, delete_dd])
-    model_table.select(fn=lambda evt: str(evt.value) if evt.index[1] == 0 else gr.update(), outputs=copy_box)
+    def _on_model_select(evt: gr.SelectData):
+        return str(evt.value) if evt.index[1] == 0 else gr.update()
+
+    model_table.select(fn=_on_model_select, outputs=copy_box)
     delete_btn.click(fn=_delete_model, inputs=[download_path, delete_dd], outputs=[model_table, delete_dd, delete_status])
     gr.Timer(value=2).tick(fn=_poll_status, outputs=status_box)
 
