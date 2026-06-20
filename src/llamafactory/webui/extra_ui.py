@@ -252,51 +252,22 @@ def _list_downloaded_models(download_path: str) -> list[list]:
     return rows
 
 
-def _build_model_list_html(rows: list) -> str:
-    if not rows:
-        return "<p style='color:#9ca3af;padding:8px 0'>暂无已下载的模型</p>"
-    html_rows = []
-    for name, size in rows:
-        safe = name.replace("'", "\\'")
-        html_rows.append(
-            f"<tr>"
-            f"<td style='padding:6px 10px;border-bottom:1px solid #e5e7eb'>{name}</td>"
-            f"<td style='padding:6px 10px;border-bottom:1px solid #e5e7eb;color:#6b7280'>{size}</td>"
-            f"<td style='padding:6px 10px;border-bottom:1px solid #e5e7eb;text-align:center'>"
-            f"<button onclick=\"navigator.clipboard.writeText('{safe}').then(()=>{{this.textContent='✓';setTimeout(()=>this.textContent='⎘',1200)}})\" "
-            f"style='cursor:pointer;background:none;border:1px solid #d1d5db;border-radius:4px;padding:1px 8px;font-size:13px' title='复制模型名称'>⎘</button>"
-            f"</td>"
-            f"</tr>"
-        )
-    return (
-        "<table style='width:100%;border-collapse:collapse;font-size:14px'>"
-        "<thead><tr>"
-        "<th style='text-align:left;padding:6px 10px;border-bottom:2px solid #e5e7eb'>模型名称</th>"
-        "<th style='text-align:left;padding:6px 10px;border-bottom:2px solid #e5e7eb'>占用空间</th>"
-        "<th style='padding:6px 10px;border-bottom:2px solid #e5e7eb'>复制</th>"
-        "</tr></thead>"
-        "<tbody>" + "".join(html_rows) + "</tbody>"
-        "</table>"
-    )
-
-
 def _refresh_models(download_path: str) -> tuple:
     rows = _list_downloaded_models(download_path)
     names = [r[0] for r in rows]
-    return _build_model_list_html(rows), gr.Dropdown(choices=names, value=None)
+    return rows, gr.Dropdown(choices=names, value=None)
 
 
 def _delete_model(download_path: str, model_name: str | None) -> tuple:
     if not model_name:
-        rows = _list_downloaded_models(download_path)
-        return _build_model_list_html(rows), gr.Dropdown(choices=[]), "请先选择要删除的模型。"
+        return _list_downloaded_models(download_path), gr.Dropdown(choices=[]), "请先选择要删除的模型。"
     folder = os.path.join(download_path, model_name)
     if not os.path.exists(folder):
         rows = _list_downloaded_models(download_path)
-        return _build_model_list_html(rows), gr.Dropdown(choices=[r[0] for r in rows]), f"路径不存在：{folder}"
+        return rows, gr.Dropdown(choices=[r[0] for r in rows]), f"路径不存在：{folder}"
     shutil.rmtree(folder)
     rows = _list_downloaded_models(download_path)
-    return _build_model_list_html(rows), gr.Dropdown(choices=[r[0] for r in rows], value=None), f"✅ 已删除：{model_name}"
+    return rows, gr.Dropdown(choices=[r[0] for r in rows], value=None), f"✅ 已删除：{model_name}"
 
 
 _DISTIL_CONFIG = os.path.join("数据集蒸馏房", "distil_config.json")
@@ -597,7 +568,13 @@ def create_extra_tab() -> dict[str, "Component"]:
     gr.Markdown("---\n### 已下载的模型")
 
     refresh_btn = gr.Button("刷新列表")
-    model_table = gr.HTML(value="")
+    model_table = gr.Dataframe(
+        headers=["模型名称", "占用空间"],
+        datatype=["str", "str"],
+        interactive=False,
+        label="已下载列表",
+    )
+    copy_box = gr.Textbox(label="点击列表中的模型名称后在此复制", interactive=False, show_copy_button=True)
 
     with gr.Row():
         delete_dd = gr.Dropdown(choices=[], label="选择要删除的模型", scale=3)
@@ -609,6 +586,7 @@ def create_extra_tab() -> dict[str, "Component"]:
     check_btn.click(fn=_check_space, inputs=[download_path, series_dd, model_dd], outputs=status_box)
     download_btn.click(fn=_start_download, inputs=[download_path, series_dd, model_dd], outputs=status_box)
     refresh_btn.click(fn=_refresh_models, inputs=download_path, outputs=[model_table, delete_dd])
+    model_table.select(fn=lambda evt: str(evt.value) if evt.index[1] == 0 else gr.update(), outputs=copy_box)
     delete_btn.click(fn=_delete_model, inputs=[download_path, delete_dd], outputs=[model_table, delete_dd, delete_status])
     gr.Timer(value=2).tick(fn=_poll_status, outputs=status_box)
 
