@@ -72,17 +72,24 @@ def _save_revision(model_id: str, revision: str) -> None:
             json.dump(revisions, f, ensure_ascii=False, indent=2)
 
 
-def _fetch_remote_revision(model_id: str) -> str | None:
-    """从 ModelScope API 获取当前 HEAD revision。"""
+def _get_modelscope_cached_revision(model_id: str) -> str | None:
+    """从 ModelScope 本地 git 缓存读取真实 commit hash。"""
     try:
-        from modelscope.hub.api import HubApi
-        api = HubApi()
-        files = api.get_model_files(model_id, recursive=False)
-        if files and isinstance(files, list):
-            for f in files:
-                rev = f.get("Revision") or f.get("revision")
-                if rev:
-                    return rev
+        import subprocess
+        cache_base = os.path.expanduser("~/.cache/modelscope/hub")
+        candidates = [
+            os.path.join(cache_base, model_id),
+            os.path.join(cache_base, model_id.replace("/", "---")),
+            os.path.join(cache_base, model_id.replace("/", "--")),
+        ]
+        for path in candidates:
+            if os.path.isdir(path):
+                result = subprocess.run(
+                    ["git", "log", "-1", "--format=%H"],
+                    cwd=path, capture_output=True, text=True, timeout=10,
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    return result.stdout.strip()
     except Exception:
         pass
     return None
@@ -186,15 +193,14 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
             from modelscope import snapshot_download
             pinned = _get_pinned_revision(model_id)
             if pinned:
-                dl_result["revision"] = pinned
                 dl_result["path"] = snapshot_download(model_id, revision=pinned, local_dir=local_dir)
+                dl_result["revision"] = pinned
             else:
-                revision = _fetch_remote_revision(model_id)
+                dl_result["path"] = snapshot_download(model_id, local_dir=local_dir)
+                revision = _get_modelscope_cached_revision(model_id)
                 dl_result["revision"] = revision
-                kwargs = {"local_dir": local_dir}
                 if revision:
-                    kwargs["revision"] = revision
-                dl_result["path"] = snapshot_download(model_id, **kwargs)
+                    _save_revision(model_id, revision)
         except Exception as e:
             dl_result["error"] = e
         finally:
