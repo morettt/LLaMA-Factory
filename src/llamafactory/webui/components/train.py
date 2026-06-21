@@ -50,7 +50,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
 
     with gr.Row():
         learning_rate = gr.Textbox(value="5e-5")
-        num_train_epochs = gr.Textbox(value="3.0")
+        num_train_epochs = gr.Textbox(value="6.0")
         max_grad_norm = gr.Textbox(value="1.0")
         max_samples = gr.Textbox(value="100000")
         compute_type = gr.Dropdown(choices=["bf16", "fp16", "fp32", "pure_bf16"], value="bf16")
