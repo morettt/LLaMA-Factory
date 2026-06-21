@@ -48,7 +48,7 @@ MODELS = {
         ('Qwen/Qwen2-VL-2B', 'Qwen2-VL-2B'),
         ('Qwen/Qwen2-VL-7B', 'Qwen2-VL-7B'),
         ('Qwen/Qwen2-VL-72B', 'Qwen2-VL-72B'),
-        ('Qwen/Qwen2-VL-2B-Instruct', 'Qwen2-VL-2B-Instruct'),
+        ('morelle/Qwen2-VL-2B-Instruct', 'Qwen2-VL-2B-Instruct'),
         ('Qwen/Qwen2-VL-7B-Instruct', 'Qwen2-VL-7B-Instruct'),
         ('Qwen/Qwen2-VL-72B-Instruct', 'Qwen2-VL-72B-Instruct'),
         ('Qwen/Qwen2-VL-2B-Instruct-GPTQ-Int8', 'Qwen2-VL-2B-Instruct-GPTQ-Int8'),
