@@ -318,9 +318,15 @@ def _list_downloaded_models(download_path: str) -> list[list]:
 def _build_model_table_html(rows: list) -> str:
     if not rows:
         return "<p style='color:#6b7280;font-size:14px;padding:4px 0'>暂无已下载的模型</p>"
+    revisions = _load_revisions()
     html_rows = []
     for name, size in rows:
         safe = name.replace("'", "\\'")
+        rev = revisions.get(name)
+        if rev:
+            rev_cell = f"<span style='color:#10b981;font-size:12px'>📌 {rev[:12]}...</span>"
+        else:
+            rev_cell = "<span style='color:#9ca3af;font-size:12px'>未固定</span>"
         html_rows.append(
             f"<tr>"
             f"<td style='padding:5px 12px;border-bottom:1px solid var(--border-color-primary)'>"
@@ -329,6 +335,7 @@ def _build_model_table_html(rows: list) -> str:
             f"style='margin-left:6px;cursor:pointer;background:none;border:none;color:#9ca3af;font-size:12px;padding:0 2px;vertical-align:middle' title='复制'>⎘</button>"
             f"</td>"
             f"<td style='padding:5px 12px;border-bottom:1px solid var(--border-color-primary);color:#6b7280'>{size}</td>"
+            f"<td style='padding:5px 12px;border-bottom:1px solid var(--border-color-primary)'>{rev_cell}</td>"
             f"</tr>"
         )
     return (
@@ -336,6 +343,7 @@ def _build_model_table_html(rows: list) -> str:
         "<thead><tr style='background:var(--table-even-background-fill)'>"
         "<th style='text-align:left;padding:6px 12px;border-bottom:1px solid var(--border-color-primary);font-weight:600'>模型名称</th>"
         "<th style='text-align:left;padding:6px 12px;border-bottom:1px solid var(--border-color-primary);font-weight:600'>占用空间</th>"
+        "<th style='text-align:left;padding:6px 12px;border-bottom:1px solid var(--border-color-primary);font-weight:600'>固定版本</th>"
         "</tr></thead>"
         "<tbody>" + "".join(html_rows) + "</tbody>"
         "</table>"
