@@ -50,7 +50,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
 
     with gr.Row():
         learning_rate = gr.Textbox(value="5e-5")
-        num_train_epochs = gr.Textbox(value="3.0")
+        num_train_epochs = gr.Textbox(value="6.0")
         max_grad_norm = gr.Textbox(value="1.0")
         max_samples = gr.Textbox(value="100000")
         compute_type = gr.Dropdown(choices=["bf16", "fp16", "fp32", "pure_bf16"], value="bf16")
@@ -190,8 +190,8 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
         with gr.Row():
             lora_rank = gr.Slider(minimum=1, maximum=1024, value=8, step=1)
             lora_alpha = gr.Slider(minimum=1, maximum=2048, value=16, step=1)
-            lora_dropout = gr.Slider(minimum=0, maximum=1, value=0, step=0.01)
-            loraplus_lr_ratio = gr.Slider(minimum=0, maximum=64, value=0, step=0.01)
+            lora_dropout = gr.Slider(minimum=0, maximum=1, value=0.01, step=0.01)
+            loraplus_lr_ratio = gr.Slider(minimum=0, maximum=64, value=16, step=0.01)
             create_new_adapter = gr.Checkbox()
 
         with gr.Row():
