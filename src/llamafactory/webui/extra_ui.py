@@ -161,6 +161,7 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
             return
         _active_downloads[model_name]["model_gb"] = model_gb
 
+    pinned_rev = _get_pinned_revision(model_id)
     if model_gb is not None:
         if available_gb < model_gb:
             msg = f"❌ 空间不足！{model_name} 需要 {model_gb:.1f} GB，可用仅 {available_gb:.1f} GB"
@@ -170,11 +171,13 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
                 _active_downloads[model_name]["status"] = msg
                 _active_downloads[model_name]["active"] = False
             return
+        rev_note = f"\n📌 使用固定版本：{pinned_rev[:12]}..." if pinned_rev else "\n🔍 首次下载，正在获取版本号..."
         with _downloads_lock:
-            _active_downloads[model_name]["status"] = f"准备下载：{model_name}\n大小：{model_gb:.1f} GB，空间充足，开始下载..."
+            _active_downloads[model_name]["status"] = f"准备下载：{model_name}\n大小：{model_gb:.1f} GB，空间充足，开始下载...{rev_note}"
     else:
+        rev_note = f"\n📌 使用固定版本：{pinned_rev[:12]}..." if pinned_rev else "\n🔍 首次下载，正在获取版本号..."
         with _downloads_lock:
-            _active_downloads[model_name]["status"] = f"准备下载：{model_name}\n⚠️ 无法确认模型大小，继续下载..."
+            _active_downloads[model_name]["status"] = f"准备下载：{model_name}\n⚠️ 无法确认模型大小，继续下载...{rev_note}"
 
     dl_result = {"done": False, "error": None, "path": None, "revision": None}
 
