@@ -247,7 +247,12 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
                 pinned = _get_pinned_revision(model_name)
                 if revision and not pinned:
                     _save_revision(model_name, revision)
-                rev_note = f"\n版本：{revision}（已固定）" if revision else "\n版本：未能固定"
+                if revision and revision not in ("master", "main"):
+                    rev_note = f"\n版本：{revision}（已固定）"
+                elif revision in ("master", "main"):
+                    rev_note = "\n版本：无法固定（该模型在魔塔无版本tag，只有master分支）"
+                else:
+                    rev_note = "\n版本：未能获取"
                 _active_downloads[model_name]["status"] = f"✅ 下载完毕！\n大小：{final_gb:.2f} GB\n路径：{dl_result['path']}{rev_note}"
             _active_downloads[model_name]["active"] = False
 
@@ -333,10 +338,12 @@ def _build_model_table_html(rows: list) -> str:
     for name, size in rows:
         safe = name.replace("'", "\\'")
         rev = revisions.get(name)
-        if rev:
-            rev_cell = f"<span style='color:#10b981;font-size:12px'>📌 {rev[:12]}...</span>"
+        if rev and rev not in ("master", "main"):
+            rev_cell = f"<span style='color:#10b981;font-size:12px'>📌 {rev}</span>"
+        elif rev in ("master", "main"):
+            rev_cell = "<span style='color:#f59e0b;font-size:12px'>⚠️ 无法固定（无版本tag）</span>"
         else:
-            rev_cell = "<span style='color:#9ca3af;font-size:12px'>未固定</span>"
+            rev_cell = "<span style='color:#9ca3af;font-size:12px'>-</span>"
         html_rows.append(
             f"<tr>"
             f"<td style='padding:5px 12px;border-bottom:1px solid var(--border-color-primary)'>"
