@@ -1829,6 +1829,39 @@ class Qwen2VLPlugin(BasePlugin):
 
         return messages
 
+    @override
+    def get_mm_inputs(
+        self,
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        imglens: list[int],
+        vidlens: list[int],
+        audlens: list[int],
+        batch_ids: list[list[int]],
+        processor: Optional["MMProcessor"],
+    ) -> dict[str, Union[list[int], "torch.Tensor"]]:
+        self._validate_input(processor, images, videos, audios)
+        mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+
+        if (images or videos) and batch_ids:
+            tokenizer = getattr(processor, "tokenizer", None)
+            if tokenizer is not None:
+                image_token_id = tokenizer.convert_tokens_to_ids(self.image_token)
+                video_token_id = tokenizer.convert_tokens_to_ids(self.video_token)
+                mm_token_type_ids = []
+                for ids in batch_ids:
+                    type_ids = [0] * len(ids)
+                    for i, tid in enumerate(ids):
+                        if tid == image_token_id:
+                            type_ids[i] = 1
+                        elif tid == video_token_id:
+                            type_ids[i] = 2
+                    mm_token_type_ids.append(type_ids)
+                mm_inputs["mm_token_type_ids"] = mm_token_type_ids
+
+        return mm_inputs
+
 
 @dataclass
 class Qwen3VLPlugin(Qwen2VLPlugin):
