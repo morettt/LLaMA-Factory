@@ -60,14 +60,14 @@ def _load_revisions() -> dict:
         return {}
 
 
-def _get_pinned_revision(model_id: str) -> str | None:
-    return _load_revisions().get(model_id)
+def _get_pinned_revision(model_name: str) -> str | None:
+    return _load_revisions().get(model_name)
 
 
-def _save_revision(model_id: str, revision: str) -> None:
+def _save_revision(model_name: str, revision: str) -> None:
     revisions = _load_revisions()
-    if model_id not in revisions:
-        revisions[model_id] = revision
+    if model_name not in revisions:
+        revisions[model_name] = revision
         with open(_REVISION_FILE, "w", encoding="utf-8") as f:
             json.dump(revisions, f, ensure_ascii=False, indent=2)
 
@@ -172,7 +172,7 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
             return
         _active_downloads[model_name]["model_gb"] = model_gb
 
-    pinned_rev = _get_pinned_revision(model_id)
+    pinned_rev = _get_pinned_revision(model_name)
     if model_gb is not None:
         if available_gb < model_gb:
             msg = f"❌ 空间不足！{model_name} 需要 {model_gb:.1f} GB，可用仅 {available_gb:.1f} GB"
@@ -195,7 +195,7 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
     def _do_download():
         try:
             from modelscope import snapshot_download
-            pinned = _get_pinned_revision(model_id)
+            pinned = _get_pinned_revision(model_name)
             if pinned:
                 dl_result["path"] = snapshot_download(model_id, revision=pinned, local_dir=local_dir)
                 dl_result["revision"] = pinned
@@ -207,7 +207,7 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
                     kwargs["revision"] = revision
                 dl_result["path"] = snapshot_download(model_id, **kwargs)
                 if revision:
-                    _save_revision(model_id, revision)
+                    _save_revision(model_name, revision)
         except Exception as e:
             dl_result["error"] = e
         finally:
@@ -215,7 +215,7 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
 
     threading.Thread(target=_do_download, daemon=True).start()
 
-    pinned_rev = _get_pinned_revision(model_id)
+    pinned_rev = _get_pinned_revision(model_name)
     rev_line = f"📌 固定版本：{pinned_rev[:12]}...\n" if pinned_rev else "🔍 首次下载（下载完成后固定版本）\n"
 
     while not dl_result["done"]:
@@ -244,9 +244,9 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
             else:
                 final_gb = _get_folder_size_gb(local_dir)
                 revision = dl_result.get("revision")
-                pinned = _get_pinned_revision(model_id)
+                pinned = _get_pinned_revision(model_name)
                 if revision and not pinned:
-                    _save_revision(model_id, revision)
+                    _save_revision(model_name, revision)
                 rev_note = f"\n版本：{revision}（已固定）" if revision else "\n版本：未能固定"
                 _active_downloads[model_name]["status"] = f"✅ 下载完毕！\n大小：{final_gb:.2f} GB\n路径：{dl_result['path']}{rev_note}"
             _active_downloads[model_name]["active"] = False
