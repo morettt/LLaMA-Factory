@@ -74,28 +74,47 @@ def _save_revision(model_name: str, revision: str) -> None:
 
 def _fetch_modelscope_revision(model_id: str) -> str | None:
     """
-    从 ModelScope API 获取模型当前最新的 revision tag。
-    ModelScope revision 是 branch/tag 名（如 master、v1.0.0），不是 git hash。
-    优先返回最新 tag，没有 tag 则返回 master。
+    获取 ModelScope 模型当前版本标识。
+    优先取版本 tag（如 v1.0.0），没有 tag 则用 git ls-remote 拿 HEAD commit hash。
     """
+    import subprocess
+
+    # 1. 尝试从 API 拿版本 tag
+    tag = None
     try:
-        # 新版 modelscope_hub
         from modelscope_hub.api import HubApi
-        api = HubApi()
-        revisions = api.list_repo_revisions(model_id, "model")
+        revisions = HubApi().list_repo_revisions(model_id, "model")
         tags = [r["name"] for r in revisions if r.get("name") not in ("master", "main")]
-        return tags[0] if tags else "master"
+        if tags:
+            tag = tags[0]
     except Exception:
         pass
+    if not tag:
+        try:
+            from modelscope.hub.api import HubApi
+            revisions = HubApi().list_model_revisions(model_id)
+            tags = [r for r in revisions if r not in ("master", "main")]
+            if tags:
+                tag = tags[0]
+        except Exception:
+            pass
+    if tag:
+        return tag
+
+    # 2. 没有 tag：用 git ls-remote 拿 ModelScope git 仓库的 HEAD commit hash
     try:
-        # 旧版 modelscope
-        from modelscope.hub.api import HubApi
-        api = HubApi()
-        revisions = api.list_model_revisions(model_id)
-        tags = [r for r in revisions if r not in ("master", "main")]
-        return tags[0] if tags else "master"
+        url = f"https://www.modelscope.cn/{model_id}.git"
+        result = subprocess.run(
+            ["git", "ls-remote", url, "HEAD"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            commit = result.stdout.split()[0]
+            if len(commit) == 40:
+                return commit
     except Exception:
         pass
+
     return None
 
 
@@ -247,7 +266,12 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
                 pinned = _get_pinned_revision(model_name)
                 if revision and not pinned:
                     _save_revision(model_name, revision)
-                rev_note = f"\n版本：{revision}（已固定）" if revision else "\n版本：未能固定"
+                if revision and revision not in ("master", "main"):
+                    rev_note = f"\n版本：{revision}（已固定）"
+                elif revision in ("master", "main"):
+                    rev_note = "\n版本：无法固定（该模型在魔塔无版本tag，只有master分支）"
+                else:
+                    rev_note = "\n版本：未能获取"
                 _active_downloads[model_name]["status"] = f"✅ 下载完毕！\n大小：{final_gb:.2f} GB\n路径：{dl_result['path']}{rev_note}"
             _active_downloads[model_name]["active"] = False
 
@@ -333,10 +357,13 @@ def _build_model_table_html(rows: list) -> str:
     for name, size in rows:
         safe = name.replace("'", "\\'")
         rev = revisions.get(name)
-        if rev:
-            rev_cell = f"<span style='color:#10b981;font-size:12px'>📌 {rev[:12]}...</span>"
+        if rev and rev not in ("master", "main"):
+            display = rev if len(rev) <= 12 else rev[:12] + "..."
+            rev_cell = f"<span style='color:#10b981;font-size:12px'>📌 {display}</span>"
+        elif rev in ("master", "main"):
+            rev_cell = "<span style='color:#f59e0b;font-size:12px'>⚠️ 无法固定</span>"
         else:
-            rev_cell = "<span style='color:#9ca3af;font-size:12px'>未固定</span>"
+            rev_cell = "<span style='color:#9ca3af;font-size:12px'>-</span>"
         html_rows.append(
             f"<tr>"
             f"<td style='padding:5px 12px;border-bottom:1px solid var(--border-color-primary)'>"
