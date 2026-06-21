@@ -604,5 +604,11 @@ class KTODataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
         if "token_type_ids" in kl_batch:
             batch["kl_token_type_ids"] = kl_batch["token_type_ids"]
 
+        if "position_ids" in kl_batch:
+            batch["kl_position_ids"] = kl_batch["position_ids"]
+
+        if "rope_deltas" in kl_batch:
+            batch["kl_rope_deltas"] = kl_batch["rope_deltas"]
+
         batch["kto_tags"] = torch.tensor(kto_tags)
         return batch

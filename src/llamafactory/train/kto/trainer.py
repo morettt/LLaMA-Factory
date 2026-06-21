@@ -158,6 +158,16 @@ class CustomKTOTrainer(KTOTrainer):
         if f"{prefix}token_type_ids" in batch:
             model_inputs["token_type_ids"] = batch[f"{prefix}token_type_ids"]
 
+        if f"{prefix}position_ids" in batch:
+            model_inputs["position_ids"] = batch[f"{prefix}position_ids"]
+        elif prefix == "" and "position_ids" in batch:
+            model_inputs["position_ids"] = batch["position_ids"]
+
+        if f"{prefix}rope_deltas" in batch:
+            model_inputs["rope_deltas"] = batch[f"{prefix}rope_deltas"]
+        elif prefix == "" and "rope_deltas" in batch:
+            model_inputs["rope_deltas"] = batch["rope_deltas"]
+
         if "pixel_values" in batch:
             model_inputs["pixel_values"] = batch["pixel_values"]
 
@@ -166,6 +176,9 @@ class CustomKTOTrainer(KTOTrainer):
 
         if "image_grid_thw" in batch:
             model_inputs["image_grid_thw"] = batch["image_grid_thw"]
+
+        if "mm_token_type_ids" in batch:
+            model_inputs["mm_token_type_ids"] = batch["mm_token_type_ids"]
 
         if "aspect_ratio_ids" in batch:
             model_inputs["aspect_ratio_ids"] = batch["aspect_ratio_ids"]
