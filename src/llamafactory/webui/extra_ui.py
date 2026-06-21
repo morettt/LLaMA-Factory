@@ -49,6 +49,45 @@ def _get_model_size_gb(model_id: str) -> float | None:
         return None
 
 
+_REVISION_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_revisions.json")
+
+
+def _load_revisions() -> dict:
+    try:
+        with open(_REVISION_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _get_pinned_revision(model_id: str) -> str | None:
+    return _load_revisions().get(model_id)
+
+
+def _save_revision(model_id: str, revision: str) -> None:
+    revisions = _load_revisions()
+    if model_id not in revisions:
+        revisions[model_id] = revision
+        with open(_REVISION_FILE, "w", encoding="utf-8") as f:
+            json.dump(revisions, f, ensure_ascii=False, indent=2)
+
+
+def _fetch_remote_revision(model_id: str) -> str | None:
+    """从 ModelScope API 获取当前 HEAD revision。"""
+    try:
+        from modelscope.hub.api import HubApi
+        api = HubApi()
+        files = api.get_model_files(model_id, recursive=False)
+        if files and isinstance(files, list):
+            for f in files:
+                rev = f.get("Revision") or f.get("revision")
+                if rev:
+                    return rev
+    except Exception:
+        pass
+    return None
+
+
 def _get_folder_size_gb(folder: str) -> float:
     total = 0
     for dirpath, _, filenames in os.walk(folder):
@@ -122,6 +161,7 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
             return
         _active_downloads[model_name]["model_gb"] = model_gb
 
+    pinned_rev = _get_pinned_revision(model_id)
     if model_gb is not None:
         if available_gb < model_gb:
             msg = f"❌ 空间不足！{model_name} 需要 {model_gb:.1f} GB，可用仅 {available_gb:.1f} GB"
@@ -131,18 +171,30 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
                 _active_downloads[model_name]["status"] = msg
                 _active_downloads[model_name]["active"] = False
             return
+        rev_note = f"\n📌 使用固定版本：{pinned_rev[:12]}..." if pinned_rev else "\n🔍 首次下载，正在获取版本号..."
         with _downloads_lock:
-            _active_downloads[model_name]["status"] = f"准备下载：{model_name}\n大小：{model_gb:.1f} GB，空间充足，开始下载..."
+            _active_downloads[model_name]["status"] = f"准备下载：{model_name}\n大小：{model_gb:.1f} GB，空间充足，开始下载...{rev_note}"
     else:
+        rev_note = f"\n📌 使用固定版本：{pinned_rev[:12]}..." if pinned_rev else "\n🔍 首次下载，正在获取版本号..."
         with _downloads_lock:
-            _active_downloads[model_name]["status"] = f"准备下载：{model_name}\n⚠️ 无法确认模型大小，继续下载..."
+            _active_downloads[model_name]["status"] = f"准备下载：{model_name}\n⚠️ 无法确认模型大小，继续下载...{rev_note}"
 
-    dl_result = {"done": False, "error": None, "path": None}
+    dl_result = {"done": False, "error": None, "path": None, "revision": None}
 
     def _do_download():
         try:
             from modelscope import snapshot_download
-            dl_result["path"] = snapshot_download(model_id, local_dir=local_dir)
+            pinned = _get_pinned_revision(model_id)
+            if pinned:
+                dl_result["revision"] = pinned
+                dl_result["path"] = snapshot_download(model_id, revision=pinned, local_dir=local_dir)
+            else:
+                revision = _fetch_remote_revision(model_id)
+                dl_result["revision"] = revision
+                kwargs = {"local_dir": local_dir}
+                if revision:
+                    kwargs["revision"] = revision
+                dl_result["path"] = snapshot_download(model_id, **kwargs)
         except Exception as e:
             dl_result["error"] = e
         finally:
@@ -175,7 +227,12 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
                 _active_downloads[model_name]["status"] = f"❌ 下载失败：{dl_result['error']}"
             else:
                 final_gb = _get_folder_size_gb(local_dir)
-                _active_downloads[model_name]["status"] = f"✅ 下载完毕！\n大小：{final_gb:.2f} GB\n路径：{dl_result['path']}"
+                revision = dl_result.get("revision")
+                pinned = _get_pinned_revision(model_id)
+                if revision and not pinned:
+                    _save_revision(model_id, revision)
+                rev_note = f"\n版本：{revision[:12]}...（已固定）" if revision else "\n版本：未能固定（API 未返回 revision）"
+                _active_downloads[model_name]["status"] = f"✅ 下载完毕！\n大小：{final_gb:.2f} GB\n路径：{dl_result['path']}{rev_note}"
             _active_downloads[model_name]["active"] = False
 
 
