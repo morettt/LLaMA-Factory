@@ -185,16 +185,9 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
         try:
             from modelscope import snapshot_download
             pinned = _get_pinned_revision(model_id)
-            if pinned:
-                dl_result["revision"] = pinned
-                dl_result["path"] = snapshot_download(model_id, revision=pinned, local_dir=local_dir)
-            else:
-                revision = _fetch_remote_revision(model_id)
-                dl_result["revision"] = revision
-                kwargs = {"local_dir": local_dir}
-                if revision:
-                    kwargs["revision"] = revision
-                dl_result["path"] = snapshot_download(model_id, **kwargs)
+            revision = pinned or _fetch_remote_revision(model_id)
+            dl_result["revision"] = revision
+            dl_result["path"] = snapshot_download(model_id, local_dir=local_dir)
         except Exception as e:
             dl_result["error"] = e
         finally:
