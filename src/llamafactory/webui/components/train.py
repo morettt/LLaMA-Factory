@@ -191,7 +191,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
             lora_rank = gr.Slider(minimum=1, maximum=1024, value=8, step=1)
             lora_alpha = gr.Slider(minimum=1, maximum=2048, value=16, step=1)
             lora_dropout = gr.Slider(minimum=0, maximum=1, value=0, step=0.01)
-            loraplus_lr_ratio = gr.Slider(minimum=0, maximum=64, value=0, step=0.01)
+            loraplus_lr_ratio = gr.Slider(minimum=0, maximum=64, value=16, step=0.01)
             create_new_adapter = gr.Checkbox()
 
         with gr.Row():
