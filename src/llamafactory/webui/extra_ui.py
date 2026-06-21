@@ -49,74 +49,6 @@ def _get_model_size_gb(model_id: str) -> float | None:
         return None
 
 
-_REVISION_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_revisions.json")
-
-
-def _load_revisions() -> dict:
-    try:
-        with open(_REVISION_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return {}
-
-
-def _get_pinned_revision(model_name: str) -> str | None:
-    return _load_revisions().get(model_name)
-
-
-def _save_revision(model_name: str, revision: str) -> None:
-    revisions = _load_revisions()
-    if model_name not in revisions:
-        revisions[model_name] = revision
-        with open(_REVISION_FILE, "w", encoding="utf-8") as f:
-            json.dump(revisions, f, ensure_ascii=False, indent=2)
-
-
-def _fetch_modelscope_revision(model_id: str) -> str | None:
-    """
-    获取 ModelScope 模型当前版本标识。
-    优先取版本 tag（如 v1.0.0），没有 tag 则用 git ls-remote 拿 HEAD commit hash。
-    """
-    import subprocess
-
-    # 1. 尝试从 API 拿版本 tag
-    tag = None
-    try:
-        from modelscope_hub.api import HubApi
-        revisions = HubApi().list_repo_revisions(model_id, "model")
-        tags = [r["name"] for r in revisions if r.get("name") not in ("master", "main")]
-        if tags:
-            tag = tags[0]
-    except Exception:
-        pass
-    if not tag:
-        try:
-            from modelscope.hub.api import HubApi
-            revisions = HubApi().list_model_revisions(model_id)
-            tags = [r for r in revisions if r not in ("master", "main")]
-            if tags:
-                tag = tags[0]
-        except Exception:
-            pass
-    if tag:
-        return tag
-
-    # 2. 没有 tag：用 git ls-remote 拿 ModelScope git 仓库的 HEAD commit hash
-    try:
-        url = f"https://www.modelscope.cn/{model_id}.git"
-        result = subprocess.run(
-            ["git", "ls-remote", url, "HEAD"],
-            capture_output=True, text=True, timeout=30,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            commit = result.stdout.split()[0]
-            if len(commit) == 40:
-                return commit
-    except Exception:
-        pass
-
-    return None
-
 
 def _get_folder_size_gb(folder: str) -> float:
     total = 0
@@ -191,7 +123,6 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
             return
         _active_downloads[model_name]["model_gb"] = model_gb
 
-    pinned_rev = _get_pinned_revision(model_name)
     if model_gb is not None:
         if available_gb < model_gb:
             msg = f"❌ 空间不足！{model_name} 需要 {model_gb:.1f} GB，可用仅 {available_gb:.1f} GB"
@@ -201,41 +132,24 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
                 _active_downloads[model_name]["status"] = msg
                 _active_downloads[model_name]["active"] = False
             return
-        rev_note = f"\n📌 使用固定版本：{pinned_rev[:12]}..." if pinned_rev else "\n🔍 首次下载，正在获取版本号..."
         with _downloads_lock:
-            _active_downloads[model_name]["status"] = f"准备下载：{model_name}\n大小：{model_gb:.1f} GB，空间充足，开始下载...{rev_note}"
+            _active_downloads[model_name]["status"] = f"准备下载：{model_name}\n大小：{model_gb:.1f} GB，空间充足，开始下载..."
     else:
-        rev_note = f"\n📌 使用固定版本：{pinned_rev[:12]}..." if pinned_rev else "\n🔍 首次下载，正在获取版本号..."
         with _downloads_lock:
-            _active_downloads[model_name]["status"] = f"准备下载：{model_name}\n⚠️ 无法确认模型大小，继续下载...{rev_note}"
+            _active_downloads[model_name]["status"] = f"准备下载：{model_name}\n⚠️ 无法确认模型大小，继续下载..."
 
-    dl_result = {"done": False, "error": None, "path": None, "revision": None}
+    dl_result = {"done": False, "error": None, "path": None}
 
     def _do_download():
         try:
             from modelscope import snapshot_download
-            pinned = _get_pinned_revision(model_name)
-            if pinned:
-                dl_result["path"] = snapshot_download(model_id, revision=pinned, local_dir=local_dir)
-                dl_result["revision"] = pinned
-            else:
-                revision = _fetch_modelscope_revision(model_id)
-                dl_result["revision"] = revision
-                kwargs = {"local_dir": local_dir}
-                if revision:
-                    kwargs["revision"] = revision
-                dl_result["path"] = snapshot_download(model_id, **kwargs)
-                if revision:
-                    _save_revision(model_name, revision)
+            dl_result["path"] = snapshot_download(model_id, local_dir=local_dir)
         except Exception as e:
             dl_result["error"] = e
         finally:
             dl_result["done"] = True
 
     threading.Thread(target=_do_download, daemon=True).start()
-
-    pinned_rev = _get_pinned_revision(model_name)
-    rev_line = f"📌 固定版本：{pinned_rev[:12]}...\n" if pinned_rev else "🔍 首次下载（下载完成后固定版本）\n"
 
     while not dl_result["done"]:
         current_gb = _get_folder_size_gb(local_dir) if os.path.exists(local_dir) else 0.0
@@ -245,12 +159,12 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
             pct = min(current_gb / mgb * 100, 100.0)
             bar = "█" * 20 if pct >= 100.0 else "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
             status = (
-                f"{rev_line}[{bar}] 正在校验/整理文件，请稍候..."
+                f"[{bar}] 正在校验/整理文件，请稍候..."
                 if pct >= 100.0
-                else f"{rev_line}[{bar}] {pct:.1f}%\n已下载：{current_gb:.2f} GB / {mgb:.1f} GB"
+                else f"[{bar}] {pct:.1f}%\n已下载：{current_gb:.2f} GB / {mgb:.1f} GB"
             )
         else:
-            status = f"{rev_line}下载中... 已下载 {current_gb:.2f} GB"
+            status = f"下载中... 已下载 {current_gb:.2f} GB"
         with _downloads_lock:
             if model_name in _active_downloads:
                 _active_downloads[model_name]["status"] = status
@@ -262,17 +176,7 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
                 _active_downloads[model_name]["status"] = f"❌ 下载失败：{dl_result['error']}"
             else:
                 final_gb = _get_folder_size_gb(local_dir)
-                revision = dl_result.get("revision")
-                pinned = _get_pinned_revision(model_name)
-                if revision and not pinned:
-                    _save_revision(model_name, revision)
-                if revision and revision not in ("master", "main"):
-                    rev_note = f"\n版本：{revision}（已固定）"
-                elif revision in ("master", "main"):
-                    rev_note = "\n版本：无法固定（该模型在魔塔无版本tag，只有master分支）"
-                else:
-                    rev_note = "\n版本：未能获取"
-                _active_downloads[model_name]["status"] = f"✅ 下载完毕！\n大小：{final_gb:.2f} GB\n路径：{dl_result['path']}{rev_note}"
+                _active_downloads[model_name]["status"] = f"✅ 下载完毕！\n大小：{final_gb:.2f} GB\n路径：{dl_result['path']}"
             _active_downloads[model_name]["active"] = False
 
 
@@ -352,18 +256,9 @@ def _list_downloaded_models(download_path: str) -> list[list]:
 def _build_model_table_html(rows: list) -> str:
     if not rows:
         return "<p style='color:#6b7280;font-size:14px;padding:4px 0'>暂无已下载的模型</p>"
-    revisions = _load_revisions()
     html_rows = []
     for name, size in rows:
         safe = name.replace("'", "\\'")
-        rev = revisions.get(name)
-        if rev and rev not in ("master", "main"):
-            display = rev if len(rev) <= 12 else rev[:12] + "..."
-            rev_cell = f"<span style='color:#10b981;font-size:12px'>📌 {display}</span>"
-        elif rev in ("master", "main"):
-            rev_cell = "<span style='color:#f59e0b;font-size:12px'>⚠️ 无法固定</span>"
-        else:
-            rev_cell = "<span style='color:#9ca3af;font-size:12px'>-</span>"
         html_rows.append(
             f"<tr>"
             f"<td style='padding:5px 12px;border-bottom:1px solid var(--border-color-primary)'>"
@@ -372,7 +267,6 @@ def _build_model_table_html(rows: list) -> str:
             f"style='margin-left:6px;cursor:pointer;background:none;border:none;color:#9ca3af;font-size:12px;padding:0 2px;vertical-align:middle' title='复制'>⎘</button>"
             f"</td>"
             f"<td style='padding:5px 12px;border-bottom:1px solid var(--border-color-primary);color:#6b7280'>{size}</td>"
-            f"<td style='padding:5px 12px;border-bottom:1px solid var(--border-color-primary)'>{rev_cell}</td>"
             f"</tr>"
         )
     return (
@@ -380,7 +274,6 @@ def _build_model_table_html(rows: list) -> str:
         "<thead><tr style='background:var(--table-even-background-fill)'>"
         "<th style='text-align:left;padding:6px 12px;border-bottom:1px solid var(--border-color-primary);font-weight:600'>模型名称</th>"
         "<th style='text-align:left;padding:6px 12px;border-bottom:1px solid var(--border-color-primary);font-weight:600'>占用空间</th>"
-        "<th style='text-align:left;padding:6px 12px;border-bottom:1px solid var(--border-color-primary);font-weight:600'>固定版本</th>"
         "</tr></thead>"
         "<tbody>" + "".join(html_rows) + "</tbody>"
         "</table>"
