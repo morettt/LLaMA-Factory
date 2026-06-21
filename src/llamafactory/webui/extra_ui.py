@@ -72,24 +72,28 @@ def _save_revision(model_id: str, revision: str) -> None:
             json.dump(revisions, f, ensure_ascii=False, indent=2)
 
 
-def _get_modelscope_cached_revision(model_id: str) -> str | None:
-    """从 ModelScope 本地 git 缓存读取真实 commit hash。"""
+def _fetch_modelscope_revision(model_id: str) -> str | None:
+    """
+    从 ModelScope API 获取模型当前最新的 revision tag。
+    ModelScope revision 是 branch/tag 名（如 master、v1.0.0），不是 git hash。
+    优先返回最新 tag，没有 tag 则返回 master。
+    """
     try:
-        import subprocess
-        cache_base = os.path.expanduser("~/.cache/modelscope/hub")
-        candidates = [
-            os.path.join(cache_base, model_id),
-            os.path.join(cache_base, model_id.replace("/", "---")),
-            os.path.join(cache_base, model_id.replace("/", "--")),
-        ]
-        for path in candidates:
-            if os.path.isdir(path):
-                result = subprocess.run(
-                    ["git", "log", "-1", "--format=%H"],
-                    cwd=path, capture_output=True, text=True, timeout=10,
-                )
-                if result.returncode == 0 and result.stdout.strip():
-                    return result.stdout.strip()
+        # 新版 modelscope_hub
+        from modelscope_hub.api import HubApi
+        api = HubApi()
+        revisions = api.list_repo_revisions(model_id, "model")
+        tags = [r["name"] for r in revisions if r.get("name") not in ("master", "main")]
+        return tags[0] if tags else "master"
+    except Exception:
+        pass
+    try:
+        # 旧版 modelscope
+        from modelscope.hub.api import HubApi
+        api = HubApi()
+        revisions = api.list_model_revisions(model_id)
+        tags = [r for r in revisions if r not in ("master", "main")]
+        return tags[0] if tags else "master"
     except Exception:
         pass
     return None
@@ -196,9 +200,12 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
                 dl_result["path"] = snapshot_download(model_id, revision=pinned, local_dir=local_dir)
                 dl_result["revision"] = pinned
             else:
-                dl_result["path"] = snapshot_download(model_id, local_dir=local_dir)
-                revision = _get_modelscope_cached_revision(model_id)
+                revision = _fetch_modelscope_revision(model_id)
                 dl_result["revision"] = revision
+                kwargs = {"local_dir": local_dir}
+                if revision:
+                    kwargs["revision"] = revision
+                dl_result["path"] = snapshot_download(model_id, **kwargs)
                 if revision:
                     _save_revision(model_id, revision)
         except Exception as e:
@@ -240,7 +247,7 @@ def _run_full_download_thread(model_id: str, local_dir: str, model_name: str, av
                 pinned = _get_pinned_revision(model_id)
                 if revision and not pinned:
                     _save_revision(model_id, revision)
-                rev_note = f"\n版本：{revision[:12]}...（已固定）" if revision else "\n版本：未能固定（API 未返回 revision）"
+                rev_note = f"\n版本：{revision}（已固定）" if revision else "\n版本：未能固定"
                 _active_downloads[model_name]["status"] = f"✅ 下载完毕！\n大小：{final_gb:.2f} GB\n路径：{dl_result['path']}{rev_note}"
             _active_downloads[model_name]["active"] = False
 
