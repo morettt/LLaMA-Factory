@@ -68,10 +68,10 @@ def _patch_mllama_forward(model: "PreTrainedModel") -> None:
                     aspect_ratio_ids=aspect_ratio_ids,
                     aspect_ratio_mask=aspect_ratio_mask,
                 )
-            cross_attention_states = vision_outputs.last_hidden_state
-            cross_attention_states = self.multi_modal_projector(cross_attention_states).reshape(
-                -1, cross_attention_states.shape[-2], self.hidden_size
-            )
+                cross_attention_states = vision_outputs.last_hidden_state
+                cross_attention_states = self.multi_modal_projector(cross_attention_states).reshape(
+                    -1, cross_attention_states.shape[-2], self.hidden_size
+                )
             kwargs["cross_attention_states"] = cross_attention_states
             pixel_values = None
 
