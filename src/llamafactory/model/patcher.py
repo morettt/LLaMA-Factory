@@ -49,6 +49,44 @@ if is_transformers_version_greater_than("4.57.0"):
 logger = logging.get_logger(__name__)
 
 
+def _patch_mllama_forward(model: "PreTrainedModel") -> None:
+    r"""Wrap mllama vision_model call in torch.no_grad to fix gradient checkpoint backward-twice error.
+
+    cross_attention_states is shared across all language model decoder layers. With gradient
+    checkpointing, each layer's recomputed forward tries to access the vision graph, but the
+    first layer's recompute already freed it. Running vision_model under no_grad detaches it
+    from the autograd graph so each layer can safely read from a plain tensor.
+    """
+    inner_model = model.model
+    original_forward = type(inner_model).forward
+
+    def patched_forward(self, *args, pixel_values=None, aspect_ratio_ids=None, aspect_ratio_mask=None, **kwargs):
+        if pixel_values is not None and "cross_attention_states" not in kwargs:
+            with torch.no_grad():
+                vision_outputs = self.vision_model(
+                    pixel_values=pixel_values,
+                    aspect_ratio_ids=aspect_ratio_ids,
+                    aspect_ratio_mask=aspect_ratio_mask,
+                )
+            cross_attention_states = vision_outputs.last_hidden_state
+            cross_attention_states = self.multi_modal_projector(cross_attention_states).reshape(
+                -1, cross_attention_states.shape[-2], self.hidden_size
+            )
+            kwargs["cross_attention_states"] = cross_attention_states
+            pixel_values = None
+
+        return original_forward(
+            self,
+            *args,
+            pixel_values=pixel_values,
+            aspect_ratio_ids=aspect_ratio_ids,
+            aspect_ratio_mask=aspect_ratio_mask,
+            **kwargs,
+        )
+
+    type(inner_model).forward = patched_forward
+
+
 def patch_qwen3_omni_moe_thinker_text_sparse_moe_block():
     if is_transformers_version_greater_than("4.57.0") and not is_transformers_version_greater_than("4.58.0"):
         from .model_utils.moe import Qwen3OmniMoeThinkerTextSparseMoeBlock
@@ -410,6 +448,9 @@ def patch_model(
 
         if getattr(model.config, "model_type", None) == "youtu_vl":
             patch_youtu_vl_model(model)
+
+        if getattr(model.config, "model_type", None) == "mllama":
+            _patch_mllama_forward(model)
 
         prepare_model_for_training(model, model_args)
         autocast_projector_dtype(model, model_args)
