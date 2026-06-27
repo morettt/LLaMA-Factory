@@ -33,6 +33,8 @@ def find_all_linear_modules(model: "PreTrainedModel", freeze_vision_tower: bool)
         forbidden_modules.add("output_layer")
     elif model_type == "internlm2":
         forbidden_modules.add("output")
+    elif model_type == "falcon_h1":
+        forbidden_modules.update({"out_proj", "conv1d"})
 
     if model_type in COMPOSITE_MODELS:
         forbidden_modules.update(COMPOSITE_MODELS[model_type].projector_keys)
