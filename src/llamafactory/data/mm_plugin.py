@@ -1484,6 +1484,18 @@ class MllamaPlugin(BasePlugin):
                 )
             )  # shape: (batch_size, length, max_num_images, max_num_tiles)
 
+            # transformers >= 5.6.0 bug: aspect_ratio_ids/mask only cover real images,
+            # but pixel_values covers all batch samples (including empty slots).
+            # Pad to match pixel_values batch dimension.
+            pv_batch_size = mm_inputs["pixel_values"].shape[0]
+            for key in ("aspect_ratio_ids", "aspect_ratio_mask"):
+                if key in mm_inputs and mm_inputs[key].shape[0] != pv_batch_size:
+                    pad_rows = pv_batch_size - mm_inputs[key].shape[0]
+                    pad_shape = (pad_rows,) + mm_inputs[key].shape[1:]
+                    mm_inputs[key] = torch.cat(
+                        [mm_inputs[key], torch.zeros(pad_shape, dtype=mm_inputs[key].dtype)], dim=0
+                    )
+
         return mm_inputs
 
 
