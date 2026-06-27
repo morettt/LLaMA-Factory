@@ -61,7 +61,7 @@ def _patch_mllama_forward(model: "PreTrainedModel") -> None:
     original_forward = type(inner_model).forward
 
     def patched_forward(self, *args, pixel_values=None, aspect_ratio_ids=None, aspect_ratio_mask=None, **kwargs):
-        if pixel_values is not None and "cross_attention_states" not in kwargs:
+        if pixel_values is not None and kwargs.get("cross_attention_states") is None:
             with torch.no_grad():
                 vision_outputs = self.vision_model(
                     pixel_values=pixel_values,
