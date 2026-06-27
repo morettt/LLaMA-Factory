@@ -177,6 +177,9 @@ class CustomKTOTrainer(KTOTrainer):
         if "image_grid_thw" in batch:
             model_inputs["image_grid_thw"] = batch["image_grid_thw"]
 
+        if "image_position_ids" in batch:
+            model_inputs["image_position_ids"] = batch["image_position_ids"]
+
         if "mm_token_type_ids" in batch:
             model_inputs["mm_token_type_ids"] = batch["mm_token_type_ids"]
 
