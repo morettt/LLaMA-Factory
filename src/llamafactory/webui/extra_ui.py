@@ -592,7 +592,9 @@ def create_extra_tab() -> dict[str, "Component"]:
         check_btn = gr.Button("检查磁盘空间")
         download_btn = gr.Button("开始下载", variant="primary")
 
-    status_box = gr.Textbox(label="状态", interactive=False, lines=8)
+    with gr.Row():
+        check_status_box = gr.Textbox(label="磁盘空间检查", interactive=False, lines=8)
+        download_status_box = gr.Textbox(label="下载进度", interactive=False, lines=8)
 
     gr.Markdown("---\n### 已下载的模型")
 
@@ -606,17 +608,18 @@ def create_extra_tab() -> dict[str, "Component"]:
     delete_status = gr.Textbox(label="操作结果", interactive=False, lines=1)
 
     series_dd.change(fn=_update_model_choices, inputs=series_dd, outputs=model_dd)
-    check_btn.click(fn=_check_space, inputs=[download_path, series_dd, model_dd], outputs=status_box)
-    download_btn.click(fn=_start_download, inputs=[download_path, series_dd, model_dd], outputs=status_box)
+    check_btn.click(fn=_check_space, inputs=[download_path, series_dd, model_dd], outputs=check_status_box)
+    download_btn.click(fn=_start_download, inputs=[download_path, series_dd, model_dd], outputs=download_status_box)
     refresh_btn.click(fn=_refresh_models, inputs=download_path, outputs=[model_table, delete_dd])
     delete_btn.click(fn=_delete_model, inputs=[download_path, delete_dd], outputs=[model_table, delete_dd, delete_status])
-    gr.Timer(value=2).tick(fn=_poll_status, outputs=status_box)
+    gr.Timer(value=2).tick(fn=_poll_status, outputs=download_status_box)
 
     return dict(
         extra_series=series_dd,
         extra_model=model_dd,
         extra_download_path=download_path,
-        extra_status=status_box,
+        extra_check_status=check_status_box,
+        extra_download_status=download_status_box,
         extra_model_table=model_table,
         extra_delete_dd=delete_dd,
         extra_delete_status=delete_status,
