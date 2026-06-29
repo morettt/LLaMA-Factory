@@ -418,7 +418,7 @@ MODELS = {
         ('LLM-Research/Phi-3-mini-128k-instruct', 'Phi-3-4B-128k-Instruct'),
         ('LLM-Research/Phi-3-small-8k-instruct', 'Phi-3-7B-8k-Instruct'),
         ('LLM-Research/Phi-3-small-128k-instruct', 'Phi-3-7B-128k-Instruct'),
-        ('LLM-Research/Phi-3-medium-4k-instruct', 'Phi-3-14B-8k-Instruct'),
+        ('LLM-Research/Phi-3-medium-4k-instruct', 'Phi-3-14B-4k-Instruct'),
         ('LLM-Research/Phi-3-medium-128k-instruct', 'Phi-3-14B-128k-Instruct'),
         ('LLM-Research/Phi-3.5-mini-instruct', 'Phi-3.5-4B-Instruct'),
         ('LLM-Research/Phi-3.5-MoE-instruct', 'Phi-3.5-MoE-42B-Instruct'),
