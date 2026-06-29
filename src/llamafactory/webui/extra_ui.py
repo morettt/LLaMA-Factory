@@ -70,6 +70,10 @@ def _get_model_id(series: str, model_name: str) -> str:
     for mid, mname in MODELS.get(series, []):
         if mname == model_name:
             return mid
+    for series_models in MODELS.values():
+        for mid, mname in series_models:
+            if mname == model_name:
+                return mid
     return ""
 
 
@@ -578,13 +582,13 @@ def create_distil_tab() -> dict[str, "Component"]:
 def create_extra_tab() -> dict[str, "Component"]:
     series_choices = list(MODELS.keys())
     first_series = series_choices[0]
-    first_models = [name for _, name in MODELS[first_series]]
+    all_model_names = [name for series_models in MODELS.values() for _, name in series_models]
 
     gr.Markdown("## 模型下载")
 
     with gr.Row():
         series_dd = gr.Dropdown(choices=series_choices, value=first_series, label="模型系列", scale=1)
-        model_dd = gr.Dropdown(choices=first_models, value=None, label="选择模型（可输入关键字过滤）", scale=2, filterable=True)
+        model_dd = gr.Dropdown(choices=all_model_names, value=None, label="选择模型（可输入关键字过滤）", scale=2, filterable=True, allow_custom_value=True)
 
     download_path = gr.Textbox(value="/root/autodl-tmp", label="下载路径")
 
