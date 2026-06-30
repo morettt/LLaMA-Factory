@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import base64
 import concurrent.futures
 import json
 import os
@@ -679,20 +680,37 @@ _PROCESS_MODES = {
 }
 
 
-def _get_gallery_images(upload_dir: str) -> list:
+def _get_gallery_html(upload_dir: str) -> str:
     if not os.path.exists(upload_dir):
-        return []
+        return "<p style='color:#6b7280;padding:8px'>目录不存在或暂无图片</p>"
     exts = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
-    return [
-        os.path.join(upload_dir, f)
-        for f in sorted(os.listdir(upload_dir))
-        if os.path.splitext(f)[1].lower() in exts
-    ]
+    files = sorted(f for f in os.listdir(upload_dir) if os.path.splitext(f)[1].lower() in exts)
+    if not files:
+        return "<p style='color:#6b7280;padding:8px'>暂无图片</p>"
+    items = []
+    for fname in files[:100]:
+        try:
+            with open(os.path.join(upload_dir, fname), "rb") as fh:
+                b64 = base64.b64encode(fh.read()).decode()
+            ext = os.path.splitext(fname)[1].lower().lstrip(".")
+            mime = "jpeg" if ext in ("jpg", "jpeg") else ext
+            items.append(
+                f"<div style='display:inline-block;margin:4px;text-align:center;vertical-align:top'>"
+                f"<img src='data:image/{mime};base64,{b64}' "
+                f"style='width:140px;height:140px;object-fit:contain;border:1px solid #e5e7eb;border-radius:6px'/>"
+                f"<div style='font-size:11px;color:#6b7280;margin-top:3px;width:140px;"
+                f"overflow:hidden;text-overflow:ellipsis;white-space:nowrap'>{fname}</div>"
+                f"</div>"
+            )
+        except Exception:
+            pass
+    suffix = "<p style='color:#9ca3af;font-size:12px;padding:4px 8px'>（仅显示前100张）</p>" if len(files) > 100 else ""
+    return f"<div style='padding:8px'>{''.join(items)}{suffix}</div>"
 
 
 def _upload_images(files, upload_dir: str, current_text: str) -> tuple:
     if not files:
-        return current_text, _get_gallery_images(upload_dir)
+        return current_text, _get_gallery_html(upload_dir)
     os.makedirs(upload_dir, exist_ok=True)
     new_paths = []
     for f in files:
@@ -706,15 +724,15 @@ def _upload_images(files, upload_dir: str, current_text: str) -> tuple:
     if new_text:
         new_text += "\n\n"
     new_text += "\n\n".join(additions)
-    return new_text, _get_gallery_images(upload_dir)
+    return new_text, _get_gallery_html(upload_dir)
 
 
 def _switch_mode(mode: str, img_dir: str = "") -> tuple:
     cfg = _PROCESS_MODES.get(mode, _PROCESS_MODES["SFT（单多轮对话）"])
     text = _load_dataset_text(cfg["input"])
     is_mllm = mode == "多模态"
-    gallery = _get_gallery_images(img_dir) if is_mllm else []
-    return text, cfg["input"], cfg["output"], gr.update(visible=is_mllm), gallery
+    gallery_html = _get_gallery_html(img_dir) if is_mllm else ""
+    return text, cfg["input"], cfg["output"], gr.update(visible=is_mllm), gallery_html
 
 
 def _process_sft(text: str, output_path: str) -> str:
@@ -893,7 +911,7 @@ def create_process_tab() -> dict[str, "Component"]:
             file_types=["image"],
             file_count="multiple",
         )
-        img_gallery = gr.Gallery(label="图片预览", columns=4, height=300, object_fit="contain")
+        img_gallery = gr.HTML(value="")
 
     dataset_text = gr.Textbox(label="数据集内容", value=_load_dataset_text(default_cfg["input"]), lines=20, placeholder="在此粘贴或编辑数据集...")
 
