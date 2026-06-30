@@ -75,6 +75,19 @@ def create_ui(demo_mode: bool = False) -> "gr.Blocks":
 
         engine.manager.add_elems("footer", create_footer())
         demo.load(engine.resume, outputs=engine.manager.get_elem_list(), concurrency_limit=None)
+        demo.load(
+            fn=None,
+            js="""() => {
+                if (document.getElementById('tutorial-fixed-btn')) return;
+                const a = document.createElement('a');
+                a.id = 'tutorial-fixed-btn';
+                a.href = 'https://aideaforyou.com/learn.html?id=3';
+                a.target = '_blank';
+                a.innerHTML = '&#128218; 使用教程';
+                a.style.cssText = 'position:fixed;top:14px;right:18px;z-index:99999;padding:6px 14px;background:#f97316;color:#fff;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,0.25)';
+                document.body.appendChild(a);
+            }"""
+        )
         lang.change(engine.change_lang, [lang], engine.manager.get_elem_list(), queue=False)
         lang.input(save_config, inputs=[lang], queue=False)
 
