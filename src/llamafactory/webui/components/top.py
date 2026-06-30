@@ -32,6 +32,13 @@ if TYPE_CHECKING:
 
 def create_top() -> dict[str, "Component"]:
     with gr.Row():
+        gr.HTML(
+            "<div style='text-align:left;padding:2px 0'>"
+            "<a href='https://aideaforyou.com/learn.html?id=3' target='_blank' "
+            "style='padding:5px 14px;background:#f97316;color:#fff;border-radius:6px;"
+            "text-decoration:none;font-size:13px;font-weight:600'>📖 使用教程</a></div>"
+        )
+    with gr.Row():
         lang = gr.Dropdown(choices=["en", "ru", "zh", "ko", "ja"], value=None, scale=1)
         available_models = list(SUPPORTED_MODELS.keys()) + ["Custom"]
         model_name = gr.Dropdown(choices=available_models, value=None, scale=2)
