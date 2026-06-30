@@ -914,6 +914,37 @@ def _process_mllm(text: str, output_path: str, img_dir: str = "") -> str:
     return f"✅ 处理完成！共生成 {len(result)} 组对话\n输出文件：{output_path}"
 
 
+def _validate_mllm(text: str, img_dir: str) -> list:
+    issues = []
+    blocks = [b.strip() for b in text.strip().split("\n\n") if b.strip()]
+    for i, block in enumerate(blocks, 1):
+        img_name = q_text = a_text = None
+        for line in block.splitlines():
+            line = line.strip()
+            if line.startswith("图片名字"):
+                img_name = re.split("[：:]", line, 1)[-1].strip()
+            elif line.startswith("问"):
+                q_text = re.split("[：:]", line, 1)[-1].strip()
+            elif line.startswith("答"):
+                a_text = re.split("[：:]", line, 1)[-1].strip()
+        if img_name is None:
+            issues.append(f"第{i}块：缺少「图片名字」字段")
+        elif not img_name:
+            issues.append(f"第{i}块：「图片名字」后面没有内容")
+        else:
+            if not os.path.exists(os.path.join(img_dir, img_name)):
+                issues.append(f"第{i}块：图片文件不存在 → {img_name}")
+        if q_text is None:
+            issues.append(f"第{i}块：缺少「问」字段")
+        elif not q_text:
+            issues.append(f"第{i}块：「问」后面没有内容")
+        if a_text is None:
+            issues.append(f"第{i}块：缺少「答」字段")
+        elif not a_text:
+            issues.append(f"第{i}块：「答」后面没有内容")
+    return issues
+
+
 def _process_dataset(text: str, input_path: str, output_path: str, mode: str, img_dir: str = "") -> str:
     try:
         os.makedirs(os.path.dirname(os.path.abspath(input_path)), exist_ok=True)
@@ -929,6 +960,9 @@ def _process_dataset(text: str, input_path: str, output_path: str, mode: str, im
         elif mode == "DPO":
             return _process_dpo(text, output_path)
         elif mode == "多模态":
+            issues = _validate_mllm(text, img_dir)
+            if issues:
+                return "❌ 数据校验未通过，请修正后再处理：\n\n" + "\n".join(issues)
             return _process_mllm(text, output_path, img_dir)
         return "❌ 未知模式"
     except Exception as e:
