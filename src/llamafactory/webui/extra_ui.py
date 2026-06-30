@@ -909,9 +909,7 @@ def create_process_tab() -> dict[str, "Component"]:
 
     with gr.Column(visible=False) as img_section:
         gr.Markdown("### 图片管理")
-        with gr.Row():
-            img_upload_dir = gr.Textbox(label="图片目录", value=_DEFAULT_IMG_DIR, scale=4)
-            refresh_gallery_btn = gr.Button("刷新", scale=1)
+        img_upload_dir = gr.Textbox(label="图片目录", value=_DEFAULT_IMG_DIR)
         with gr.Row():
             with gr.Column(scale=1):
                 img_upload = gr.File(
@@ -934,7 +932,6 @@ def create_process_tab() -> dict[str, "Component"]:
 
     mode_dd.change(fn=_switch_mode, inputs=[mode_dd, img_upload_dir], outputs=[dataset_text, input_path, output_path, img_section, img_display, img_counter, img_idx])
     img_upload.upload(fn=_upload_images, inputs=[img_upload, img_upload_dir, dataset_text], outputs=[dataset_text, img_display, img_counter, img_idx])
-    refresh_gallery_btn.click(fn=lambda d: _get_image_at(d, 0), inputs=img_upload_dir, outputs=[img_display, img_counter, img_idx])
     prev_img_btn.click(fn=lambda d, i: _get_image_at(d, i - 1), inputs=[img_upload_dir, img_idx], outputs=[img_display, img_counter, img_idx])
     next_img_btn.click(fn=lambda d, i: _get_image_at(d, i + 1), inputs=[img_upload_dir, img_idx], outputs=[img_display, img_counter, img_idx])
     process_btn.click(fn=_process_dataset, inputs=[dataset_text, input_path, output_path, mode_dd], outputs=process_status)
