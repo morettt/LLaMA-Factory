@@ -721,7 +721,7 @@ def _upload_images(files, upload_dir: str, current_text: str) -> tuple:
         dest = os.path.join(upload_dir, filename)
         shutil.copy2(src, dest)
         new_paths.append(dest)
-    additions = [f"图片路径：{p}\n问：\n答：" for p in new_paths]
+    additions = [f"图片名字：{os.path.basename(p)}\n问：\n答：" for p in new_paths]
     new_text = current_text.rstrip("\n")
     if new_text:
         new_text += "\n\n"
@@ -843,13 +843,18 @@ def _process_dpo(text: str, output_path: str) -> str:
     return f"✅ 处理完成！共生成 {len(data)} 条数据\n输出文件：{output_path}"
 
 
-def _process_mllm(text: str, output_path: str) -> str:
+def _process_mllm(text: str, output_path: str, img_dir: str = "") -> str:
     lines = text.splitlines()
     result, i = [], 0
     while i < len(lines):
         line = lines[i].strip()
-        if line.startswith("图片路径"):
+        image_path = None
+        if line.startswith("图片名字"):
+            fname = line.replace("图片名字：", "").replace("图片名字:", "").strip()
+            image_path = os.path.join(img_dir, fname) if img_dir else fname
+        elif line.startswith("图片路径"):
             image_path = line.replace("图片路径：", "").replace("图片路径:", "").strip()
+        if image_path is not None:
             while i + 1 < len(lines) and not lines[i + 1].strip().startswith("问"):
                 i += 1
             question = lines[i + 1].strip().replace("问:", "").replace("问：", "").strip()
@@ -864,7 +869,7 @@ def _process_mllm(text: str, output_path: str) -> str:
     return f"✅ 处理完成！共生成 {len(result)} 组对话\n输出文件：{output_path}"
 
 
-def _process_dataset(text: str, input_path: str, output_path: str, mode: str) -> str:
+def _process_dataset(text: str, input_path: str, output_path: str, mode: str, img_dir: str = "") -> str:
     try:
         os.makedirs(os.path.dirname(os.path.abspath(input_path)), exist_ok=True)
         with open(input_path, "w", encoding="utf-8") as f:
@@ -879,7 +884,7 @@ def _process_dataset(text: str, input_path: str, output_path: str, mode: str) ->
         elif mode == "DPO":
             return _process_dpo(text, output_path)
         elif mode == "多模态":
-            return _process_mllm(text, output_path)
+            return _process_mllm(text, output_path, img_dir)
         return "❌ 未知模式"
     except Exception as e:
         return f"❌ 处理失败：{e}"
@@ -934,7 +939,7 @@ def create_process_tab() -> dict[str, "Component"]:
     img_upload.upload(fn=_upload_images, inputs=[img_upload, img_upload_dir, dataset_text], outputs=[dataset_text, img_display, img_counter, img_idx])
     prev_img_btn.click(fn=lambda d, i: _get_image_at(d, i - 1), inputs=[img_upload_dir, img_idx], outputs=[img_display, img_counter, img_idx])
     next_img_btn.click(fn=lambda d, i: _get_image_at(d, i + 1), inputs=[img_upload_dir, img_idx], outputs=[img_display, img_counter, img_idx])
-    process_btn.click(fn=_process_dataset, inputs=[dataset_text, input_path, output_path, mode_dd], outputs=process_status)
+    process_btn.click(fn=_process_dataset, inputs=[dataset_text, input_path, output_path, mode_dd, img_upload_dir], outputs=process_status)
 
     return dict(
         process_mode=mode_dd,
