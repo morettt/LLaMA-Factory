@@ -732,43 +732,35 @@ def _delete_current_image(upload_dir: str, idx: int) -> tuple:
     return _get_image_at(upload_dir, new_idx)
 
 
-def _do_upload(files, upload_dir: str, current_text: str) -> tuple:
+def _do_upload(files, upload_dir: str) -> tuple:
     os.makedirs(upload_dir, exist_ok=True)
-    new_paths = []
     for f in files:
         src = f if isinstance(f, str) else f.name
-        filename = os.path.basename(src)
-        dest = os.path.join(upload_dir, filename)
+        dest = os.path.join(upload_dir, os.path.basename(src))
         shutil.copy2(src, dest)
-        new_paths.append(dest)
-    additions = [f"图片名字：{os.path.basename(p)}\n问：\n答：" for p in new_paths]
-    new_text = current_text.rstrip("\n")
-    if new_text:
-        new_text += "\n\n"
-    new_text += "\n\n".join(additions)
     img_html, idx, dd = _get_image_at(upload_dir, 0)
-    return new_text, img_html, idx, dd
+    return img_html, idx, dd
 
 
-def _upload_with_check(files, upload_dir: str, current_text: str) -> tuple:
+def _upload_with_check(files, upload_dir: str) -> tuple:
     _hide = (gr.update(value="", visible=False), gr.update(visible=False), [])
     if not files:
         img_html, idx, dd = _get_image_at(upload_dir, 0)
-        return current_text, img_html, idx, dd, *_hide
+        return img_html, idx, dd, *_hide
     existing = set(os.listdir(upload_dir)) if os.path.exists(upload_dir) else set()
     conflicts = [os.path.basename(f if isinstance(f, str) else f.name) for f in files
                  if os.path.basename(f if isinstance(f, str) else f.name) in existing]
     if conflicts:
         msg = "⚠️ 以下文件已存在，是否覆盖？\n" + "\n".join(f"· {c}" for c in conflicts)
         img_html, idx, dd = _get_image_at(upload_dir, 0)
-        return current_text, img_html, idx, dd, gr.update(value=msg, visible=True), gr.update(visible=True), files
-    new_text, img_html, idx, dd = _do_upload(files, upload_dir, current_text)
-    return new_text, img_html, idx, dd, *_hide
+        return img_html, idx, dd, gr.update(value=msg, visible=True), gr.update(visible=True), files
+    img_html, idx, dd = _do_upload(files, upload_dir)
+    return img_html, idx, dd, *_hide
 
 
-def _confirm_overwrite(files, upload_dir: str, current_text: str) -> tuple:
-    new_text, img_html, idx, dd = _do_upload(files, upload_dir, current_text)
-    return new_text, img_html, idx, dd, gr.update(value="", visible=False), gr.update(visible=False), []
+def _confirm_overwrite(files, upload_dir: str) -> tuple:
+    img_html, idx, dd = _do_upload(files, upload_dir)
+    return img_html, idx, dd, gr.update(value="", visible=False), gr.update(visible=False), []
 
 
 def _cancel_upload() -> tuple:
@@ -1021,9 +1013,9 @@ def create_process_tab() -> dict[str, "Component"]:
     process_status = gr.Textbox(label="处理结果", interactive=False, lines=2)
 
     mode_dd.change(fn=_switch_mode, inputs=[mode_dd, img_upload_dir], outputs=[dataset_text, input_path, output_path, img_section, img_display, img_idx, img_selector])
-    _upload_outputs = [dataset_text, img_display, img_idx, img_selector, conflict_msg, confirm_row, pending_files]
-    img_upload.upload(fn=_upload_with_check, inputs=[img_upload, img_upload_dir, dataset_text], outputs=_upload_outputs)
-    confirm_overwrite_btn.click(fn=_confirm_overwrite, inputs=[pending_files, img_upload_dir, dataset_text], outputs=_upload_outputs)
+    _upload_outputs = [img_display, img_idx, img_selector, conflict_msg, confirm_row, pending_files]
+    img_upload.upload(fn=_upload_with_check, inputs=[img_upload, img_upload_dir], outputs=_upload_outputs)
+    confirm_overwrite_btn.click(fn=_confirm_overwrite, inputs=[pending_files, img_upload_dir], outputs=_upload_outputs)
     cancel_upload_btn.click(fn=_cancel_upload, outputs=[conflict_msg, confirm_row, pending_files])
     prev_img_btn.click(fn=lambda d, i: _get_image_at(d, i - 1), inputs=[img_upload_dir, img_idx], outputs=[img_display, img_idx, img_selector])
     next_img_btn.click(fn=lambda d, i: _get_image_at(d, i + 1), inputs=[img_upload_dir, img_idx], outputs=[img_display, img_idx, img_selector])
