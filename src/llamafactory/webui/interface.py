@@ -49,14 +49,7 @@ def create_ui(demo_mode: bool = False) -> "gr.Blocks":
         engine.manager.add_elems("head", {"title": title, "subtitle": subtitle})
         engine.manager.add_elems("top", create_top())
         lang: gr.Dropdown = engine.manager.get_elem_by_id("top.lang")
-        gr.HTML(
-            "<a href='https://aideaforyou.com/learn.html?id=3' target='_blank' "
-            "style='position:fixed;top:12px;right:16px;z-index:9999;"
-            "padding:6px 16px;background:#f97316;color:#fff;"
-            "border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;"
-            "box-shadow:0 2px 6px rgba(0,0,0,0.2)'>"
-            "📖 使用教程</a>"
-        )
+
 
         with gr.Tab("Train"):
             engine.manager.add_elems("train", create_train_tab(engine))
