@@ -910,16 +910,19 @@ def create_process_tab() -> dict[str, "Component"]:
         with gr.Row():
             img_upload_dir = gr.Textbox(label="图片目录", value=_DEFAULT_IMG_DIR, scale=4)
             refresh_gallery_btn = gr.Button("刷新", scale=1)
-        img_upload = gr.File(
-            label="上传图片（支持多选，上传后自动追加路径到下方文本）",
-            file_types=["image"],
-            file_count="multiple",
-        )
         with gr.Row():
-            prev_img_btn = gr.Button("◄ 上一张", scale=1)
-            img_counter = gr.Textbox(value="", interactive=False, show_label=False, scale=2)
-            next_img_btn = gr.Button("下一张 ►", scale=1)
-        img_display = gr.HTML(value="")
+            with gr.Column(scale=1):
+                img_upload = gr.File(
+                    label="上传图片（支持多选，上传后自动追加路径到下方文本）",
+                    file_types=["image"],
+                    file_count="multiple",
+                )
+            with gr.Column(scale=1):
+                img_display = gr.HTML(value="")
+                with gr.Row():
+                    prev_img_btn = gr.Button("◄ 上一张", scale=1)
+                    img_counter = gr.Textbox(value="", interactive=False, show_label=False, scale=2)
+                    next_img_btn = gr.Button("下一张 ►", scale=1)
         img_idx = gr.State(value=0)
 
     dataset_text = gr.Textbox(label="数据集内容", value=_load_dataset_text(default_cfg["input"]), lines=20, placeholder="在此粘贴或编辑数据集...")
