@@ -732,6 +732,15 @@ def _delete_current_image(upload_dir: str, idx: int) -> tuple:
     return _get_image_at(upload_dir, new_idx)
 
 
+def _delete_all_images(upload_dir: str) -> tuple:
+    for fname in _get_image_files(upload_dir):
+        try:
+            os.remove(os.path.join(upload_dir, fname))
+        except Exception:
+            pass
+    return _get_image_at(upload_dir, 0)
+
+
 def _do_upload(files, upload_dir: str) -> tuple:
     os.makedirs(upload_dir, exist_ok=True)
     for f in files:
@@ -999,12 +1008,14 @@ def create_process_tab() -> dict[str, "Component"]:
                     cancel_upload_btn = gr.Button("取消")
                 pending_files = gr.State(value=[])
             with gr.Column(scale=1):
+                img_display = gr.HTML(value="")
                 with gr.Row():
                     prev_img_btn = gr.Button("◄ 上一张", scale=1)
                     img_selector = gr.Dropdown(choices=[], value=None, show_label=False, scale=2, interactive=True)
                     next_img_btn = gr.Button("下一张 ►", scale=1)
-                del_img_btn = gr.Button("🗑 删除当前图片", variant="stop")
-                img_display = gr.HTML(value="")
+                with gr.Row():
+                    del_img_btn = gr.Button("🗑 删除当前图片", variant="stop", scale=1)
+                    del_all_btn = gr.Button("🗑 删除所有图片", variant="stop", scale=1)
         img_idx = gr.State(value=0)
 
     dataset_text = gr.Textbox(label="数据集内容", value=_load_dataset_text(default_cfg["input"]), lines=20, placeholder="在此粘贴或编辑数据集...")
@@ -1021,6 +1032,7 @@ def create_process_tab() -> dict[str, "Component"]:
     next_img_btn.click(fn=lambda d, i: _get_image_at(d, i + 1), inputs=[img_upload_dir, img_idx], outputs=[img_display, img_idx, img_selector])
     img_selector.input(fn=_jump_to_image, inputs=[img_upload_dir, img_selector], outputs=[img_display, img_idx, img_selector])
     del_img_btn.click(fn=_delete_current_image, inputs=[img_upload_dir, img_idx], outputs=[img_display, img_idx, img_selector])
+    del_all_btn.click(fn=_delete_all_images, inputs=img_upload_dir, outputs=[img_display, img_idx, img_selector])
     process_btn.click(fn=_process_dataset, inputs=[dataset_text, input_path, output_path, mode_dd, img_upload_dir], outputs=process_status)
 
     return dict(
