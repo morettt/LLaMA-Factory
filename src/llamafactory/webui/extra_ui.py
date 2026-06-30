@@ -542,7 +542,7 @@ def create_distil_tab() -> dict[str, "Component"]:
         page_info = gr.Textbox(value="第 1 页 / 共 1 页", interactive=False, show_label=False, scale=2)
 
     download_btn = gr.Button("下载数据集", variant="primary", visible=False)
-    file_content_state = gr.State("")
+    hidden_content_box = gr.Textbox(visible=False, interactive=False)
 
     page_state = gr.State(value=0)
 
@@ -565,11 +565,12 @@ def create_distil_tab() -> dict[str, "Component"]:
     download_btn.click(
         fn=_read_output_for_download,
         inputs=[output_file],
-        outputs=[file_content_state],
+        outputs=[hidden_content_box],
     ).then(
         fn=None,
-        inputs=[file_content_state],
+        inputs=[hidden_content_box],
         js="""(content) => {
+            if (!content) return;
             const blob = new Blob([content], {type: 'text/plain'});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
