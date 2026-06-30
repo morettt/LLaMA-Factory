@@ -696,9 +696,11 @@ def _get_image_at(upload_dir: str, idx: int) -> tuple:
         mime = "jpeg" if ext in ("jpg", "jpeg") else ext
         img_html = (
             f"<div style='text-align:center;padding:4px'>"
+            f"<div style='height:380px;display:flex;align-items:center;justify-content:center;"
+            f"border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background:#f9fafb'>"
             f"<img src='data:image/{mime};base64,{b64}' "
-            f"style='max-width:100%;max-height:400px;object-fit:contain;"
-            f"border-radius:8px;border:1px solid #e5e7eb'/>"
+            f"style='max-width:100%;max-height:380px;object-fit:contain'/>"
+            f"</div>"
             f"<div style='font-size:12px;color:#6b7280;margin-top:6px'>{fname}</div>"
             f"</div>"
         )
