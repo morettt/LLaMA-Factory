@@ -680,63 +680,37 @@ _PROCESS_MODES = {
 }
 
 
-def _get_gallery_html(upload_dir: str) -> str:
+def _get_image_at(upload_dir: str, idx: int) -> tuple:
     if not os.path.exists(upload_dir):
-        return "<p style='color:#6b7280;padding:8px'>目录不存在或暂无图片</p>"
+        return "<p style='color:#6b7280;padding:8px'>目录不存在或暂无图片</p>", "", 0
     exts = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
     files = sorted(f for f in os.listdir(upload_dir) if os.path.splitext(f)[1].lower() in exts)
     if not files:
-        return "<p style='color:#6b7280;padding:8px'>暂无图片</p>"
-    images_data = []
-    for fname in files:
-        try:
-            with open(os.path.join(upload_dir, fname), "rb") as fh:
-                b64 = base64.b64encode(fh.read()).decode()
-            ext = os.path.splitext(fname)[1].lower().lstrip(".")
-            mime = "jpeg" if ext in ("jpg", "jpeg") else ext
-            images_data.append({"src": f"data:image/{mime};base64,{b64}", "name": fname})
-        except Exception:
-            pass
-    if not images_data:
-        return "<p style='color:#6b7280;padding:8px'>暂无图片</p>"
-    uid = f"glr{abs(hash(upload_dir)) % 10**8}"
-    images_json = json.dumps(images_data, ensure_ascii=False)
-    return f"""
-<div style="text-align:center;padding:8px">
-  <div style="display:flex;align-items:center;justify-content:center;gap:12px">
-    <button onclick="{uid}_nav(-1)"
-      style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:50%;width:44px;height:44px;
-             font-size:22px;cursor:pointer;flex-shrink:0;line-height:1">&#8249;</button>
-    <div style="flex:1;max-width:480px">
-      <img id="{uid}_img" src="" style="max-width:100%;max-height:380px;object-fit:contain;
-           border-radius:8px;border:1px solid #e5e7eb"/>
-      <div id="{uid}_name" style="font-size:12px;color:#6b7280;margin-top:6px;
-           overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
-      <div id="{uid}_counter" style="font-size:12px;color:#9ca3af;margin-top:2px"></div>
-    </div>
-    <button onclick="{uid}_nav(1)"
-      style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:50%;width:44px;height:44px;
-             font-size:22px;cursor:pointer;flex-shrink:0;line-height:1">&#8250;</button>
-  </div>
-</div>
-<script>
-(function(){{
-  var imgs={images_json},idx=0;
-  function show(i){{
-    idx=(i+imgs.length)%imgs.length;
-    document.getElementById('{uid}_img').src=imgs[idx].src;
-    document.getElementById('{uid}_name').textContent=imgs[idx].name;
-    document.getElementById('{uid}_counter').textContent=(idx+1)+' / '+imgs.length;
-  }}
-  window['{uid}_nav']=function(d){{show(idx+d);}};
-  show(0);
-}})();
-</script>"""
+        return "<p style='color:#6b7280;padding:8px'>暂无图片</p>", "", 0
+    idx = idx % len(files)
+    fname = files[idx]
+    try:
+        with open(os.path.join(upload_dir, fname), "rb") as fh:
+            b64 = base64.b64encode(fh.read()).decode()
+        ext = os.path.splitext(fname)[1].lower().lstrip(".")
+        mime = "jpeg" if ext in ("jpg", "jpeg") else ext
+        img_html = (
+            f"<div style='text-align:center;padding:4px'>"
+            f"<img src='data:image/{mime};base64,{b64}' "
+            f"style='max-width:100%;max-height:400px;object-fit:contain;"
+            f"border-radius:8px;border:1px solid #e5e7eb'/>"
+            f"<div style='font-size:12px;color:#6b7280;margin-top:6px'>{fname}</div>"
+            f"</div>"
+        )
+    except Exception as e:
+        img_html = f"<p style='color:red'>加载失败：{fname}（{e}）</p>"
+    return img_html, f"{idx + 1} / {len(files)}", idx
 
 
 def _upload_images(files, upload_dir: str, current_text: str) -> tuple:
     if not files:
-        return current_text, _get_gallery_html(upload_dir)
+        img_html, counter, idx = _get_image_at(upload_dir, 0)
+        return current_text, img_html, counter, idx
     os.makedirs(upload_dir, exist_ok=True)
     new_paths = []
     for f in files:
@@ -750,15 +724,19 @@ def _upload_images(files, upload_dir: str, current_text: str) -> tuple:
     if new_text:
         new_text += "\n\n"
     new_text += "\n\n".join(additions)
-    return new_text, _get_gallery_html(upload_dir)
+    img_html, counter, idx = _get_image_at(upload_dir, 0)
+    return new_text, img_html, counter, idx
 
 
 def _switch_mode(mode: str, img_dir: str = "") -> tuple:
     cfg = _PROCESS_MODES.get(mode, _PROCESS_MODES["SFT（单多轮对话）"])
     text = _load_dataset_text(cfg["input"])
     is_mllm = mode == "多模态"
-    gallery_html = _get_gallery_html(img_dir) if is_mllm else ""
-    return text, cfg["input"], cfg["output"], gr.update(visible=is_mllm), gallery_html
+    if is_mllm:
+        img_html, counter, idx = _get_image_at(img_dir, 0)
+    else:
+        img_html, counter, idx = "", "", 0
+    return text, cfg["input"], cfg["output"], gr.update(visible=is_mllm), img_html, counter, idx
 
 
 def _process_sft(text: str, output_path: str) -> str:
@@ -931,22 +909,29 @@ def create_process_tab() -> dict[str, "Component"]:
         gr.Markdown("### 图片管理")
         with gr.Row():
             img_upload_dir = gr.Textbox(label="图片目录", value=_DEFAULT_IMG_DIR, scale=4)
-            refresh_gallery_btn = gr.Button("刷新图片", scale=1)
+            refresh_gallery_btn = gr.Button("刷新", scale=1)
         img_upload = gr.File(
             label="上传图片（支持多选，上传后自动追加路径到下方文本）",
             file_types=["image"],
             file_count="multiple",
         )
-        img_gallery = gr.HTML(value="")
+        with gr.Row():
+            prev_img_btn = gr.Button("◄ 上一张", scale=1)
+            img_counter = gr.Textbox(value="", interactive=False, show_label=False, scale=2)
+            next_img_btn = gr.Button("下一张 ►", scale=1)
+        img_display = gr.HTML(value="")
+        img_idx = gr.State(value=0)
 
     dataset_text = gr.Textbox(label="数据集内容", value=_load_dataset_text(default_cfg["input"]), lines=20, placeholder="在此粘贴或编辑数据集...")
 
     process_btn = gr.Button("保存并处理", variant="primary")
     process_status = gr.Textbox(label="处理结果", interactive=False, lines=2)
 
-    mode_dd.change(fn=_switch_mode, inputs=[mode_dd, img_upload_dir], outputs=[dataset_text, input_path, output_path, img_section, img_gallery])
-    img_upload.upload(fn=_upload_images, inputs=[img_upload, img_upload_dir, dataset_text], outputs=[dataset_text, img_gallery])
-    refresh_gallery_btn.click(fn=_get_gallery_html, inputs=img_upload_dir, outputs=img_gallery)
+    mode_dd.change(fn=_switch_mode, inputs=[mode_dd, img_upload_dir], outputs=[dataset_text, input_path, output_path, img_section, img_display, img_counter, img_idx])
+    img_upload.upload(fn=_upload_images, inputs=[img_upload, img_upload_dir, dataset_text], outputs=[dataset_text, img_display, img_counter, img_idx])
+    refresh_gallery_btn.click(fn=lambda d: _get_image_at(d, 0), inputs=img_upload_dir, outputs=[img_display, img_counter, img_idx])
+    prev_img_btn.click(fn=lambda d, i: _get_image_at(d, i - 1), inputs=[img_upload_dir, img_idx], outputs=[img_display, img_counter, img_idx])
+    next_img_btn.click(fn=lambda d, i: _get_image_at(d, i + 1), inputs=[img_upload_dir, img_idx], outputs=[img_display, img_counter, img_idx])
     process_btn.click(fn=_process_dataset, inputs=[dataset_text, input_path, output_path, mode_dd], outputs=process_status)
 
     return dict(
