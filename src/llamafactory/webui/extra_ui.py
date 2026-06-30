@@ -680,13 +680,17 @@ _PROCESS_MODES = {
 }
 
 
-def _get_image_at(upload_dir: str, idx: int) -> tuple:
+def _get_image_files(upload_dir: str) -> list:
     if not os.path.exists(upload_dir):
-        return "<p style='color:#6b7280;padding:8px'>目录不存在或暂无图片</p>", "", 0
+        return []
     exts = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
-    files = sorted(f for f in os.listdir(upload_dir) if os.path.splitext(f)[1].lower() in exts)
+    return sorted(f for f in os.listdir(upload_dir) if os.path.splitext(f)[1].lower() in exts)
+
+
+def _get_image_at(upload_dir: str, idx: int) -> tuple:
+    files = _get_image_files(upload_dir)
     if not files:
-        return "<p style='color:#6b7280;padding:8px'>暂无图片</p>", "", 0
+        return "<p style='color:#6b7280;padding:8px'>暂无图片</p>", 0, gr.update(choices=[], value=None)
     idx = idx % len(files)
     fname = files[idx]
     try:
@@ -701,12 +705,31 @@ def _get_image_at(upload_dir: str, idx: int) -> tuple:
             f"<img src='data:image/{mime};base64,{b64}' "
             f"style='max-width:100%;max-height:380px;object-fit:contain'/>"
             f"</div>"
-            f"<div style='font-size:12px;color:#6b7280;margin-top:6px'>{fname}</div>"
+            f"<div style='font-size:12px;color:#6b7280;margin-top:6px'>{fname} · {idx + 1} / {len(files)}</div>"
             f"</div>"
         )
     except Exception as e:
         img_html = f"<p style='color:red'>加载失败：{fname}（{e}）</p>"
-    return img_html, f"{idx + 1} / {len(files)}", idx
+    return img_html, idx, gr.update(choices=files, value=fname)
+
+
+def _jump_to_image(upload_dir: str, filename: str) -> tuple:
+    files = _get_image_files(upload_dir)
+    idx = files.index(filename) if filename and filename in files else 0
+    return _get_image_at(upload_dir, idx)
+
+
+def _delete_current_image(upload_dir: str, idx: int) -> tuple:
+    files = _get_image_files(upload_dir)
+    if not files or idx >= len(files):
+        return _get_image_at(upload_dir, 0)
+    try:
+        os.remove(os.path.join(upload_dir, files[idx]))
+    except Exception:
+        pass
+    new_files = _get_image_files(upload_dir)
+    new_idx = min(idx, len(new_files) - 1) if new_files else 0
+    return _get_image_at(upload_dir, new_idx)
 
 
 def _upload_images(files, upload_dir: str, current_text: str) -> tuple:
@@ -726,8 +749,8 @@ def _upload_images(files, upload_dir: str, current_text: str) -> tuple:
     if new_text:
         new_text += "\n\n"
     new_text += "\n\n".join(additions)
-    img_html, counter, idx = _get_image_at(upload_dir, 0)
-    return new_text, img_html, counter, idx
+    img_html, idx, dd = _get_image_at(upload_dir, 0)
+    return new_text, img_html, idx, dd
 
 
 def _switch_mode(mode: str, img_dir: str = "") -> tuple:
@@ -735,10 +758,10 @@ def _switch_mode(mode: str, img_dir: str = "") -> tuple:
     text = _load_dataset_text(cfg["input"])
     is_mllm = mode == "多模态"
     if is_mllm:
-        img_html, counter, idx = _get_image_at(img_dir, 0)
+        img_html, idx, dd = _get_image_at(img_dir, 0)
     else:
-        img_html, counter, idx = "", "", 0
-    return text, cfg["input"], cfg["output"], gr.update(visible=is_mllm), img_html, counter, idx
+        img_html, idx, dd = "", 0, gr.update(choices=[], value=None)
+    return text, cfg["input"], cfg["output"], gr.update(visible=is_mllm), img_html, idx, dd
 
 
 def _process_sft(text: str, output_path: str) -> str:
@@ -923,11 +946,12 @@ def create_process_tab() -> dict[str, "Component"]:
                     file_count="multiple",
                 )
             with gr.Column(scale=1):
-                img_display = gr.HTML(value="")
                 with gr.Row():
                     prev_img_btn = gr.Button("◄ 上一张", scale=1)
-                    img_counter = gr.Textbox(value="", interactive=False, show_label=False, scale=2)
+                    img_selector = gr.Dropdown(choices=[], value=None, show_label=False, scale=2, interactive=True)
                     next_img_btn = gr.Button("下一张 ►", scale=1)
+                del_img_btn = gr.Button("🗑 删除当前图片", variant="stop")
+                img_display = gr.HTML(value="")
         img_idx = gr.State(value=0)
 
     dataset_text = gr.Textbox(label="数据集内容", value=_load_dataset_text(default_cfg["input"]), lines=20, placeholder="在此粘贴或编辑数据集...")
@@ -935,10 +959,12 @@ def create_process_tab() -> dict[str, "Component"]:
     process_btn = gr.Button("保存并处理", variant="primary")
     process_status = gr.Textbox(label="处理结果", interactive=False, lines=2)
 
-    mode_dd.change(fn=_switch_mode, inputs=[mode_dd, img_upload_dir], outputs=[dataset_text, input_path, output_path, img_section, img_display, img_counter, img_idx])
-    img_upload.upload(fn=_upload_images, inputs=[img_upload, img_upload_dir, dataset_text], outputs=[dataset_text, img_display, img_counter, img_idx])
-    prev_img_btn.click(fn=lambda d, i: _get_image_at(d, i - 1), inputs=[img_upload_dir, img_idx], outputs=[img_display, img_counter, img_idx])
-    next_img_btn.click(fn=lambda d, i: _get_image_at(d, i + 1), inputs=[img_upload_dir, img_idx], outputs=[img_display, img_counter, img_idx])
+    mode_dd.change(fn=_switch_mode, inputs=[mode_dd, img_upload_dir], outputs=[dataset_text, input_path, output_path, img_section, img_display, img_idx, img_selector])
+    img_upload.upload(fn=_upload_images, inputs=[img_upload, img_upload_dir, dataset_text], outputs=[dataset_text, img_display, img_idx, img_selector])
+    prev_img_btn.click(fn=lambda d, i: _get_image_at(d, i - 1), inputs=[img_upload_dir, img_idx], outputs=[img_display, img_idx, img_selector])
+    next_img_btn.click(fn=lambda d, i: _get_image_at(d, i + 1), inputs=[img_upload_dir, img_idx], outputs=[img_display, img_idx, img_selector])
+    img_selector.input(fn=_jump_to_image, inputs=[img_upload_dir, img_selector], outputs=[img_display, img_idx, img_selector])
+    del_img_btn.click(fn=_delete_current_image, inputs=[img_upload_dir, img_idx], outputs=[img_display, img_idx, img_selector])
     process_btn.click(fn=_process_dataset, inputs=[dataset_text, input_path, output_path, mode_dd, img_upload_dir], outputs=process_status)
 
     return dict(
