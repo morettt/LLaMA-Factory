@@ -471,7 +471,7 @@ def _run_distil(
 
     threading.Thread(target=_run, daemon=True).start()
 
-    yield f"开始蒸馏，共 {total} 条，并发 {workers} 线程...\n", gr.update(), gr.update(), gr.update(), gr.update(visible=False)
+    yield f"开始蒸馏，共 {total} 条，并发 {workers} 线程...\n", gr.update(), gr.update(), gr.update(), gr.File(visible=False)
     while not result["done"]:
         pct = counter["done"] / total * 100
         bar = "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
@@ -480,16 +480,16 @@ def _run_distil(
             status += "\n⏹ 停止中..."
         if not _user_navigated:
             page_content, page_info_val, page_idx = _get_page(output_file, 9999)
-            yield status, page_content, page_info_val, page_idx, gr.update(visible=False)
+            yield status, page_content, page_info_val, page_idx, gr.File(visible=False)
         else:
-            yield status, gr.update(), gr.update(), gr.update(), gr.update(visible=False)
+            yield status, gr.update(), gr.update(), gr.update(), gr.File(visible=False)
         time.sleep(2)
 
     final_status = f"✅ 蒸馏完成！\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
     if _distil_stop.is_set():
         final_status = f"⏹ 已停止。\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
     page_content, page_info_val, page_idx = _get_page(output_file, 9999)
-    yield final_status, page_content, page_info_val, page_idx, gr.DownloadButton(value=output_file, visible=True)
+    yield final_status, page_content, page_info_val, page_idx, gr.File(value=output_file, visible=True)
 
 
 def create_distil_tab() -> dict[str, "Component"]:
@@ -541,7 +541,7 @@ def create_distil_tab() -> dict[str, "Component"]:
         next_btn = gr.Button("下一页", scale=1)
         page_info = gr.Textbox(value="第 1 页 / 共 1 页", interactive=False, show_label=False, scale=2)
 
-    download_btn = gr.DownloadButton(label="下载数据集", value=None, visible=False)
+    download_btn = gr.File(label="下载数据集", value=None, visible=False, interactive=False)
 
     page_state = gr.State(value=0)
 
