@@ -38,14 +38,14 @@ def create_top() -> dict[str, "Component"]:
         model_path = gr.Textbox(scale=2)
         default_hub = "modelscope" if use_modelscope() else "openmind" if use_openmind() else "huggingface"
         hub_name = gr.Dropdown(choices=["huggingface", "modelscope", "openmind"], value=default_hub, scale=2)
-        gr.HTML(
-            "<div style='display:flex;align-items:center;justify-content:flex-end;height:100%'>"
-            "<a href='https://aideaforyou.com/learn.html?id=3' target='_blank' "
-            "style='padding:6px 14px;background:#f97316;color:#fff;border-radius:6px;"
-            "text-decoration:none;font-size:14px;font-weight:600;white-space:nowrap'>"
-            "📖 使用教程</a></div>",
-            scale=1,
-        )
+        with gr.Column(scale=1, min_width=120):
+            gr.HTML(
+                "<div style='display:flex;align-items:center;justify-content:flex-end;height:100%'>"
+                "<a href='https://aideaforyou.com/learn.html?id=3' target='_blank' "
+                "style='padding:6px 14px;background:#f97316;color:#fff;border-radius:6px;"
+                "text-decoration:none;font-size:14px;font-weight:600;white-space:nowrap'>"
+                "📖 使用教程</a></div>"
+            )
 
     with gr.Row():
         finetuning_type = gr.Dropdown(choices=METHODS, value="lora", scale=1)
