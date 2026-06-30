@@ -709,11 +709,12 @@ def _upload_images(files, upload_dir: str, current_text: str) -> tuple:
     return new_text, _get_gallery_images(upload_dir)
 
 
-def _switch_mode(mode: str) -> tuple:
+def _switch_mode(mode: str, img_dir: str = "") -> tuple:
     cfg = _PROCESS_MODES.get(mode, _PROCESS_MODES["SFT（单多轮对话）"])
     text = _load_dataset_text(cfg["input"])
     is_mllm = mode == "多模态"
-    return text, cfg["input"], cfg["output"], gr.update(visible=is_mllm)
+    gallery = _get_gallery_images(img_dir) if is_mllm else []
+    return text, cfg["input"], cfg["output"], gr.update(visible=is_mllm), gallery
 
 
 def _process_sft(text: str, output_path: str) -> str:
@@ -880,26 +881,28 @@ def create_process_tab() -> dict[str, "Component"]:
         input_path = gr.Textbox(label="输入文件路径", value=default_cfg["input"], scale=3)
         output_path = gr.Textbox(label="输出文件路径", value=default_cfg["output"], scale=3)
 
+    _DEFAULT_IMG_DIR = "/root/LLaMA-Factory/数据集全自动处理/图片"
+
     with gr.Column(visible=False) as img_section:
-        gr.Markdown("### 图片上传")
-        img_upload_dir = gr.Textbox(
-            label="图片保存目录",
-            value="/root/LLaMA-Factory/数据集全自动处理/images",
-        )
+        gr.Markdown("### 图片管理")
+        with gr.Row():
+            img_upload_dir = gr.Textbox(label="图片目录", value=_DEFAULT_IMG_DIR, scale=4)
+            refresh_gallery_btn = gr.Button("刷新图片", scale=1)
         img_upload = gr.File(
             label="上传图片（支持多选，上传后自动追加路径到下方文本）",
             file_types=["image"],
             file_count="multiple",
         )
-        img_gallery = gr.Gallery(label="已上传图片预览", columns=4, height=240, object_fit="contain")
+        img_gallery = gr.Gallery(label="图片预览", columns=4, height=300, object_fit="contain")
 
     dataset_text = gr.Textbox(label="数据集内容", value=_load_dataset_text(default_cfg["input"]), lines=20, placeholder="在此粘贴或编辑数据集...")
 
     process_btn = gr.Button("保存并处理", variant="primary")
     process_status = gr.Textbox(label="处理结果", interactive=False, lines=2)
 
-    mode_dd.change(fn=_switch_mode, inputs=mode_dd, outputs=[dataset_text, input_path, output_path, img_section])
+    mode_dd.change(fn=_switch_mode, inputs=[mode_dd, img_upload_dir], outputs=[dataset_text, input_path, output_path, img_section, img_gallery])
     img_upload.upload(fn=_upload_images, inputs=[img_upload, img_upload_dir, dataset_text], outputs=[dataset_text, img_gallery])
+    refresh_gallery_btn.click(fn=_get_gallery_images, inputs=img_upload_dir, outputs=img_gallery)
     process_btn.click(fn=_process_dataset, inputs=[dataset_text, input_path, output_path, mode_dd], outputs=process_status)
 
     return dict(
