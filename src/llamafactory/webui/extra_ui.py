@@ -730,11 +730,19 @@ def _upload_images(files, upload_dir: str, current_text: str) -> tuple:
     return new_text, img_html, counter, idx
 
 
+_MLLM_EXAMPLE = (
+    "图片名字：01.jpg\n问：这个图片里面是什么\n答：\n\n"
+    "图片名字：02.jpg\n问：这个图片里面有什么\n答："
+)
+
+
 def _switch_mode(mode: str, img_dir: str = "") -> tuple:
     cfg = _PROCESS_MODES.get(mode, _PROCESS_MODES["SFT（单多轮对话）"])
     text = _load_dataset_text(cfg["input"])
     is_mllm = mode == "多模态"
     if is_mllm:
+        if not text.strip():
+            text = _MLLM_EXAMPLE
         img_html, counter, idx = _get_image_at(img_dir, 0)
     else:
         img_html, counter, idx = "", "", 0
