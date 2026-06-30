@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 def create_top() -> dict[str, "Component"]:
     with gr.Row():
         gr.HTML(
-            "<div style='text-align:right;padding:2px 0'>"
+            "<div style='text-align:left;padding:2px 0'>"
             "<a href='https://aideaforyou.com/learn.html?id=3' target='_blank' "
             "style='padding:5px 14px;background:#f97316;color:#fff;border-radius:6px;"
             "text-decoration:none;font-size:13px;font-weight:600'>📖 使用教程</a></div>"
