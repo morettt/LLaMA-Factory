@@ -687,25 +687,51 @@ def _get_gallery_html(upload_dir: str) -> str:
     files = sorted(f for f in os.listdir(upload_dir) if os.path.splitext(f)[1].lower() in exts)
     if not files:
         return "<p style='color:#6b7280;padding:8px'>暂无图片</p>"
-    items = []
-    for fname in files[:100]:
+    images_data = []
+    for fname in files:
         try:
             with open(os.path.join(upload_dir, fname), "rb") as fh:
                 b64 = base64.b64encode(fh.read()).decode()
             ext = os.path.splitext(fname)[1].lower().lstrip(".")
             mime = "jpeg" if ext in ("jpg", "jpeg") else ext
-            items.append(
-                f"<div style='display:inline-block;margin:4px;text-align:center;vertical-align:top'>"
-                f"<img src='data:image/{mime};base64,{b64}' "
-                f"style='width:140px;height:140px;object-fit:contain;border:1px solid #e5e7eb;border-radius:6px'/>"
-                f"<div style='font-size:11px;color:#6b7280;margin-top:3px;width:140px;"
-                f"overflow:hidden;text-overflow:ellipsis;white-space:nowrap'>{fname}</div>"
-                f"</div>"
-            )
+            images_data.append({"src": f"data:image/{mime};base64,{b64}", "name": fname})
         except Exception:
             pass
-    suffix = "<p style='color:#9ca3af;font-size:12px;padding:4px 8px'>（仅显示前100张）</p>" if len(files) > 100 else ""
-    return f"<div style='padding:8px'>{''.join(items)}{suffix}</div>"
+    if not images_data:
+        return "<p style='color:#6b7280;padding:8px'>暂无图片</p>"
+    uid = f"glr{abs(hash(upload_dir)) % 10**8}"
+    images_json = json.dumps(images_data, ensure_ascii=False)
+    return f"""
+<div style="text-align:center;padding:8px">
+  <div style="display:flex;align-items:center;justify-content:center;gap:12px">
+    <button onclick="{uid}_nav(-1)"
+      style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:50%;width:44px;height:44px;
+             font-size:22px;cursor:pointer;flex-shrink:0;line-height:1">&#8249;</button>
+    <div style="flex:1;max-width:480px">
+      <img id="{uid}_img" src="" style="max-width:100%;max-height:380px;object-fit:contain;
+           border-radius:8px;border:1px solid #e5e7eb"/>
+      <div id="{uid}_name" style="font-size:12px;color:#6b7280;margin-top:6px;
+           overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+      <div id="{uid}_counter" style="font-size:12px;color:#9ca3af;margin-top:2px"></div>
+    </div>
+    <button onclick="{uid}_nav(1)"
+      style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:50%;width:44px;height:44px;
+             font-size:22px;cursor:pointer;flex-shrink:0;line-height:1">&#8250;</button>
+  </div>
+</div>
+<script>
+(function(){{
+  var imgs={images_json},idx=0;
+  function show(i){{
+    idx=(i+imgs.length)%imgs.length;
+    document.getElementById('{uid}_img').src=imgs[idx].src;
+    document.getElementById('{uid}_name').textContent=imgs[idx].name;
+    document.getElementById('{uid}_counter').textContent=(idx+1)+' / '+imgs.length;
+  }}
+  window['{uid}_nav']=function(d){{show(idx+d);}};
+  show(0);
+}})();
+</script>"""
 
 
 def _upload_images(files, upload_dir: str, current_text: str) -> tuple:
