@@ -679,10 +679,41 @@ _PROCESS_MODES = {
 }
 
 
+def _get_gallery_images(upload_dir: str) -> list:
+    if not os.path.exists(upload_dir):
+        return []
+    exts = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
+    return [
+        os.path.join(upload_dir, f)
+        for f in sorted(os.listdir(upload_dir))
+        if os.path.splitext(f)[1].lower() in exts
+    ]
+
+
+def _upload_images(files, upload_dir: str, current_text: str) -> tuple:
+    if not files:
+        return current_text, _get_gallery_images(upload_dir)
+    os.makedirs(upload_dir, exist_ok=True)
+    new_paths = []
+    for f in files:
+        src = f if isinstance(f, str) else f.name
+        filename = os.path.basename(src)
+        dest = os.path.join(upload_dir, filename)
+        shutil.copy2(src, dest)
+        new_paths.append(dest)
+    additions = [f"图片路径：{p}\n问：\n答：" for p in new_paths]
+    new_text = current_text.rstrip("\n")
+    if new_text:
+        new_text += "\n\n"
+    new_text += "\n\n".join(additions)
+    return new_text, _get_gallery_images(upload_dir)
+
+
 def _switch_mode(mode: str) -> tuple:
     cfg = _PROCESS_MODES.get(mode, _PROCESS_MODES["SFT（单多轮对话）"])
     text = _load_dataset_text(cfg["input"])
-    return text, cfg["input"], cfg["output"]
+    is_mllm = mode == "多模态"
+    return text, cfg["input"], cfg["output"], gr.update(visible=is_mllm)
 
 
 def _process_sft(text: str, output_path: str) -> str:
@@ -849,12 +880,26 @@ def create_process_tab() -> dict[str, "Component"]:
         input_path = gr.Textbox(label="输入文件路径", value=default_cfg["input"], scale=3)
         output_path = gr.Textbox(label="输出文件路径", value=default_cfg["output"], scale=3)
 
+    with gr.Column(visible=False) as img_section:
+        gr.Markdown("### 图片上传")
+        img_upload_dir = gr.Textbox(
+            label="图片保存目录",
+            value="/root/LLaMA-Factory/数据集全自动处理/images",
+        )
+        img_upload = gr.File(
+            label="上传图片（支持多选，上传后自动追加路径到下方文本）",
+            file_types=["image"],
+            file_count="multiple",
+        )
+        img_gallery = gr.Gallery(label="已上传图片预览", columns=4, height=240, object_fit="contain")
+
     dataset_text = gr.Textbox(label="数据集内容", value=_load_dataset_text(default_cfg["input"]), lines=20, placeholder="在此粘贴或编辑数据集...")
 
     process_btn = gr.Button("保存并处理", variant="primary")
     process_status = gr.Textbox(label="处理结果", interactive=False, lines=2)
 
-    mode_dd.change(fn=_switch_mode, inputs=mode_dd, outputs=[dataset_text, input_path, output_path])
+    mode_dd.change(fn=_switch_mode, inputs=mode_dd, outputs=[dataset_text, input_path, output_path, img_section])
+    img_upload.upload(fn=_upload_images, inputs=[img_upload, img_upload_dir, dataset_text], outputs=[dataset_text, img_gallery])
     process_btn.click(fn=_process_dataset, inputs=[dataset_text, input_path, output_path, mode_dd], outputs=process_status)
 
     return dict(
