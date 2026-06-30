@@ -471,7 +471,7 @@ def _run_distil(
 
     threading.Thread(target=_run, daemon=True).start()
 
-    yield f"开始蒸馏，共 {total} 条，并发 {workers} 线程...\n", gr.update(), gr.update(), gr.update(), gr.File(visible=False)
+    yield f"开始蒸馏，共 {total} 条，并发 {workers} 线程...\n", gr.update(), gr.update(), gr.update(), gr.update(visible=False)
     while not result["done"]:
         pct = counter["done"] / total * 100
         bar = "█" * int(pct / 5) + "░" * (20 - int(pct / 5))
@@ -480,16 +480,16 @@ def _run_distil(
             status += "\n⏹ 停止中..."
         if not _user_navigated:
             page_content, page_info_val, page_idx = _get_page(output_file, 9999)
-            yield status, page_content, page_info_val, page_idx, gr.File(visible=False)
+            yield status, page_content, page_info_val, page_idx, gr.update(visible=False)
         else:
-            yield status, gr.update(), gr.update(), gr.update(), gr.File(visible=False)
+            yield status, gr.update(), gr.update(), gr.update(), gr.update(visible=False)
         time.sleep(2)
 
     final_status = f"✅ 蒸馏完成！\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
     if _distil_stop.is_set():
         final_status = f"⏹ 已停止。\n成功：{counter['success']}  失败：{counter['fail']}\n输出文件：{output_file}"
     page_content, page_info_val, page_idx = _get_page(output_file, 9999)
-    yield final_status, page_content, page_info_val, page_idx, gr.File(value=output_file, visible=True)
+    yield final_status, page_content, page_info_val, page_idx, gr.update(visible=True)
 
 
 def create_distil_tab() -> dict[str, "Component"]:
@@ -541,7 +541,8 @@ def create_distil_tab() -> dict[str, "Component"]:
         next_btn = gr.Button("下一页", scale=1)
         page_info = gr.Textbox(value="第 1 页 / 共 1 页", interactive=False, show_label=False, scale=2)
 
-    download_btn = gr.File(label="下载数据集", value=None, visible=False, interactive=False)
+    download_btn = gr.Button("下载数据集", variant="primary", visible=False)
+    file_content_state = gr.State("")
 
     page_state = gr.State(value=0)
 
@@ -553,6 +554,33 @@ def create_distil_tab() -> dict[str, "Component"]:
     stop_btn.click(fn=_stop_distil, outputs=distil_status)
     prev_btn.click(fn=_prev_page, inputs=[output_file, page_state], outputs=[distil_output, page_info, page_state])
     next_btn.click(fn=_next_page, inputs=[output_file, page_state], outputs=[distil_output, page_info, page_state])
+
+    def _read_output_for_download(fpath: str) -> str:
+        try:
+            with open(fpath, "r", encoding="utf-8") as f:
+                return f.read()
+        except Exception:
+            return ""
+
+    download_btn.click(
+        fn=_read_output_for_download,
+        inputs=[output_file],
+        outputs=[file_content_state],
+    ).then(
+        fn=None,
+        inputs=[file_content_state],
+        js="""(content) => {
+            const blob = new Blob([content], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'distil_output.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }"""
+    )
 
     # 拉取模型列表 + 保存配置
     api_key.change(fn=_fetch_models, inputs=[api_key, api_base], outputs=model)
