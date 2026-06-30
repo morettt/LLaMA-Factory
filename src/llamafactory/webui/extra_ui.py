@@ -920,7 +920,7 @@ def create_process_tab() -> dict[str, "Component"]:
 
     mode_dd.change(fn=_switch_mode, inputs=[mode_dd, img_upload_dir], outputs=[dataset_text, input_path, output_path, img_section, img_gallery])
     img_upload.upload(fn=_upload_images, inputs=[img_upload, img_upload_dir, dataset_text], outputs=[dataset_text, img_gallery])
-    refresh_gallery_btn.click(fn=_get_gallery_images, inputs=img_upload_dir, outputs=img_gallery)
+    refresh_gallery_btn.click(fn=_get_gallery_html, inputs=img_upload_dir, outputs=img_gallery)
     process_btn.click(fn=_process_dataset, inputs=[dataset_text, input_path, output_path, mode_dd], outputs=process_status)
 
     return dict(
