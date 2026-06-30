@@ -732,10 +732,7 @@ def _delete_current_image(upload_dir: str, idx: int) -> tuple:
     return _get_image_at(upload_dir, new_idx)
 
 
-def _upload_images(files, upload_dir: str, current_text: str) -> tuple:
-    if not files:
-        img_html, counter, idx = _get_image_at(upload_dir, 0)
-        return current_text, img_html, counter, idx
+def _do_upload(files, upload_dir: str, current_text: str) -> tuple:
     os.makedirs(upload_dir, exist_ok=True)
     new_paths = []
     for f in files:
@@ -751,6 +748,31 @@ def _upload_images(files, upload_dir: str, current_text: str) -> tuple:
     new_text += "\n\n".join(additions)
     img_html, idx, dd = _get_image_at(upload_dir, 0)
     return new_text, img_html, idx, dd
+
+
+def _upload_with_check(files, upload_dir: str, current_text: str) -> tuple:
+    _hide = (gr.update(value="", visible=False), gr.update(visible=False), [])
+    if not files:
+        img_html, idx, dd = _get_image_at(upload_dir, 0)
+        return current_text, img_html, idx, dd, *_hide
+    existing = set(os.listdir(upload_dir)) if os.path.exists(upload_dir) else set()
+    conflicts = [os.path.basename(f if isinstance(f, str) else f.name) for f in files
+                 if os.path.basename(f if isinstance(f, str) else f.name) in existing]
+    if conflicts:
+        msg = "⚠️ 以下文件已存在，是否覆盖？\n" + "\n".join(f"· {c}" for c in conflicts)
+        img_html, idx, dd = _get_image_at(upload_dir, 0)
+        return current_text, img_html, idx, dd, gr.update(value=msg, visible=True), gr.update(visible=True), files
+    new_text, img_html, idx, dd = _do_upload(files, upload_dir, current_text)
+    return new_text, img_html, idx, dd, *_hide
+
+
+def _confirm_overwrite(files, upload_dir: str, current_text: str) -> tuple:
+    new_text, img_html, idx, dd = _do_upload(files, upload_dir, current_text)
+    return new_text, img_html, idx, dd, gr.update(value="", visible=False), gr.update(visible=False), []
+
+
+def _cancel_upload() -> tuple:
+    return gr.update(value="", visible=False), gr.update(visible=False), []
 
 
 def _switch_mode(mode: str, img_dir: str = "") -> tuple:
@@ -892,6 +914,37 @@ def _process_mllm(text: str, output_path: str, img_dir: str = "") -> str:
     return f"✅ 处理完成！共生成 {len(result)} 组对话\n输出文件：{output_path}"
 
 
+def _validate_mllm(text: str, img_dir: str) -> list:
+    issues = []
+    blocks = [b.strip() for b in text.strip().split("\n\n") if b.strip()]
+    for i, block in enumerate(blocks, 1):
+        img_name = q_text = a_text = None
+        for line in block.splitlines():
+            line = line.strip()
+            if line.startswith("图片名字"):
+                img_name = re.split("[：:]", line, 1)[-1].strip()
+            elif line.startswith("问"):
+                q_text = re.split("[：:]", line, 1)[-1].strip()
+            elif line.startswith("答"):
+                a_text = re.split("[：:]", line, 1)[-1].strip()
+        if img_name is None:
+            issues.append(f"第{i}块：缺少「图片名字」字段")
+        elif not img_name:
+            issues.append(f"第{i}块：「图片名字」后面没有内容")
+        else:
+            if not os.path.exists(os.path.join(img_dir, img_name)):
+                issues.append(f"第{i}块：图片文件不存在 → {img_name}")
+        if q_text is None:
+            issues.append(f"第{i}块：缺少「问」字段")
+        elif not q_text:
+            issues.append(f"第{i}块：「问」后面没有内容")
+        if a_text is None:
+            issues.append(f"第{i}块：缺少「答」字段")
+        elif not a_text:
+            issues.append(f"第{i}块：「答」后面没有内容")
+    return issues
+
+
 def _process_dataset(text: str, input_path: str, output_path: str, mode: str, img_dir: str = "") -> str:
     try:
         os.makedirs(os.path.dirname(os.path.abspath(input_path)), exist_ok=True)
@@ -907,6 +960,9 @@ def _process_dataset(text: str, input_path: str, output_path: str, mode: str, im
         elif mode == "DPO":
             return _process_dpo(text, output_path)
         elif mode == "多模态":
+            issues = _validate_mllm(text, img_dir)
+            if issues:
+                return "❌ 数据校验未通过，请修正后再处理：\n\n" + "\n".join(issues)
             return _process_mllm(text, output_path, img_dir)
         return "❌ 未知模式"
     except Exception as e:
@@ -945,6 +1001,11 @@ def create_process_tab() -> dict[str, "Component"]:
                     file_types=["image"],
                     file_count="multiple",
                 )
+                conflict_msg = gr.Textbox(value="", interactive=False, visible=False, label="文件冲突提示", lines=3)
+                with gr.Row(visible=False) as confirm_row:
+                    confirm_overwrite_btn = gr.Button("确认覆盖", variant="stop")
+                    cancel_upload_btn = gr.Button("取消")
+                pending_files = gr.State(value=[])
             with gr.Column(scale=1):
                 with gr.Row():
                     prev_img_btn = gr.Button("◄ 上一张", scale=1)
@@ -960,7 +1021,10 @@ def create_process_tab() -> dict[str, "Component"]:
     process_status = gr.Textbox(label="处理结果", interactive=False, lines=2)
 
     mode_dd.change(fn=_switch_mode, inputs=[mode_dd, img_upload_dir], outputs=[dataset_text, input_path, output_path, img_section, img_display, img_idx, img_selector])
-    img_upload.upload(fn=_upload_images, inputs=[img_upload, img_upload_dir, dataset_text], outputs=[dataset_text, img_display, img_idx, img_selector])
+    _upload_outputs = [dataset_text, img_display, img_idx, img_selector, conflict_msg, confirm_row, pending_files]
+    img_upload.upload(fn=_upload_with_check, inputs=[img_upload, img_upload_dir, dataset_text], outputs=_upload_outputs)
+    confirm_overwrite_btn.click(fn=_confirm_overwrite, inputs=[pending_files, img_upload_dir, dataset_text], outputs=_upload_outputs)
+    cancel_upload_btn.click(fn=_cancel_upload, outputs=[conflict_msg, confirm_row, pending_files])
     prev_img_btn.click(fn=lambda d, i: _get_image_at(d, i - 1), inputs=[img_upload_dir, img_idx], outputs=[img_display, img_idx, img_selector])
     next_img_btn.click(fn=lambda d, i: _get_image_at(d, i + 1), inputs=[img_upload_dir, img_idx], outputs=[img_display, img_idx, img_selector])
     img_selector.input(fn=_jump_to_image, inputs=[img_upload_dir, img_selector], outputs=[img_display, img_idx, img_selector])
