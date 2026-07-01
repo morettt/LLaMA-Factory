@@ -87,4 +87,8 @@ CSS = r"""
   background: #ea6c0a !important;
   transform: translateY(-2px) !important;
 }
+
+.toast-wrap {
+  display: none !important;
+}
 """
