@@ -88,7 +88,4 @@ CSS = r"""
   transform: translateY(-2px) !important;
 }
 
-.toast-wrap {
-  display: none !important;
-}
 """
