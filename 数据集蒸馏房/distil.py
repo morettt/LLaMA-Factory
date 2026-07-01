@@ -1,10 +1,17 @@
 import yaml
 import threading
 import concurrent.futures
+import os
+from datetime import datetime
 from openai import OpenAI
 
 with open('config.yaml', 'r', encoding='utf-8') as f:
     config = yaml.safe_load(f)
+
+# 每次运行生成新文件，按年月日时分秒命名
+_output_dir = os.path.dirname(os.path.abspath(config['output_file']))
+_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+config['output_file'] = os.path.join(_output_dir, f'{_timestamp}.txt')
 
 client = OpenAI(api_key=config['api_key'], base_url=config['api_base'])
 write_lock = threading.Lock()
